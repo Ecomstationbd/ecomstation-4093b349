@@ -32,10 +32,10 @@ export function Navbar() {
         scrolled ? "glass shadow-soft" : "bg-transparent"
       }`}
     >
-      <nav className="container flex h-16 items-center justify-between gap-3">
-        <a href="#" className="flex items-center gap-2 font-bold text-lg min-w-0 shrink">
-          <img src={logo} alt="Ecomstation" className="h-9 w-9 rounded-xl shadow-glow object-cover shrink-0" />
-          <span className="gradient-text text-base sm:text-xl tracking-tight truncate">ECOMSTATION</span>
+      <nav className="container flex h-16 items-center justify-between gap-2 sm:gap-3 px-3 sm:px-6">
+        <a href="#" className="flex items-center gap-1.5 sm:gap-2 font-bold text-lg min-w-0 flex-1 sm:flex-initial">
+          <img src={logo} alt="Ecomstation" className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shadow-glow object-cover shrink-0" />
+          <span className="gradient-text text-sm sm:text-xl tracking-tight truncate">ECOMSTATION</span>
         </a>
 
         <div className="hidden md:flex items-center gap-1">
@@ -50,7 +50,7 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <LanguageToggle />
           <ThemeToggle />
           <Button variant="hero" size="sm" className="hidden sm:inline-flex" asChild>
