@@ -1,4 +1,5 @@
-import { Rocket, Facebook, Youtube, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import { Facebook, Youtube, Instagram, Mail, Phone, MapPin } from "lucide-react";
+import logo from "@/assets/ecomstation-logo.png";
 
 export function Footer() {
   return (
@@ -7,11 +8,10 @@ export function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
           <div>
             <a href="#" className="flex items-center gap-2 font-bold text-lg mb-4">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
-                <Rocket className="h-5 w-5 text-primary-foreground" />
-              </span>
-              <span className="gradient-text text-xl">Ecomstation</span>
+              <img src={logo} alt="Ecomstation" className="h-9 w-9 rounded-xl shadow-glow object-cover" />
+              <span className="gradient-text text-xl tracking-tight">ECOMSTATION</span>
             </a>
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">Biggest E-commerce Solution</p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               বাংলাদেশের ই-কমার্স উদ্যোক্তাদের জন্য পূর্ণাঙ্গ ডিজিটাল গ্রোথ পার্টনার।
             </p>
