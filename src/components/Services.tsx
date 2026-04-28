@@ -12,11 +12,11 @@ const services: { icon: typeof Headphones; tKey: string; dKey: string; tag?: str
   { icon: TrendingUp, tKey: "s4_t", dKey: "s4_d", tag: "Hot" },
   { icon: Search, tKey: "s5_t", dKey: "s5_d" },
   { icon: Share2, tKey: "s6_t", dKey: "s6_d" },
-  { icon: LayoutDashboard, tKey: "s7_t", dKey: "s7_d", tag: "SaaS" },
+  { icon: LayoutDashboard, tKey: "s7_t", dKey: "s7_d", tag: "Coming Soon" },
   { icon: Package, tKey: "s8_t", dKey: "s8_d" },
   { icon: Printer, tKey: "s9_t", dKey: "s9_d", tag: "Shop" },
   { icon: Bot, tKey: "s10_t", dKey: "s10_d", tag: "AI" },
-  { icon: Server, tKey: "s11_t", dKey: "s11_d" },
+  { icon: Server, tKey: "s11_t", dKey: "s11_d", tag: "Coming Soon" },
 ];
 
 export function Services() {
