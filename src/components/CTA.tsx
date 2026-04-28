@@ -1,7 +1,9 @@
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 export function CTA() {
+  const { t } = useLanguage();
   return (
     <section id="contact" className="py-24">
       <div className="container">
@@ -12,19 +14,16 @@ export function CTA() {
 
           <div className="relative max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground mb-4 leading-tight">
-              আপনার বিজনেস স্কেল করার সময় এখনই
+              {t("cta_title")}
             </h2>
-            <p className="text-primary-foreground/90 text-lg mb-8">
-              আজই ফ্রি কনসালটেন্সি বুক করুন — আমাদের এক্সপার্টরা আপনার ব্যবসার জন্য
-              পার্সোনালাইজড স্ট্র্যাটেজি তৈরি করে দেবে।
-            </p>
+            <p className="text-primary-foreground/90 text-lg mb-8">{t("cta_desc")}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button variant="secondary" size="xl" className="font-semibold">
                 <MessageCircle className="mr-2 h-5 w-5" />
-                হোয়াটসঅ্যাপে কথা বলুন
+                {t("cta_whatsapp")}
               </Button>
               <Button variant="outline-glow" size="xl" className="bg-background/10 text-primary-foreground border-primary-foreground/30 hover:bg-background hover:text-primary">
-                ফ্রি কনসালটেন্সি
+                {t("cta_consult")}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
