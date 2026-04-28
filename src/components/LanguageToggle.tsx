@@ -11,10 +11,10 @@ export function LanguageToggle() {
       onClick={toggle}
       aria-label="Toggle language"
       title={lang === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
-      className="rounded-full hover:bg-secondary/80 gap-1.5 px-2.5 sm:px-3 font-semibold ml-1"
+      className="rounded-full hover:bg-secondary/80 gap-1 px-2 sm:px-3 font-semibold h-8 sm:h-9"
     >
-      <Languages className="h-4 w-4 text-primary" />
-      <span className="text-xs">{lang === "bn" ? "বাং" : "EN"}</span>
+      <Languages className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
+      <span className="text-[11px] sm:text-xs">{lang === "bn" ? "বাং" : "EN"}</span>
     </Button>
   );
 }
