@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Menu, Rocket, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import logo from "@/assets/ecomstation-logo.png";
 
 const links = [
   { href: "#services", label: "সার্ভিস" },
@@ -30,10 +31,8 @@ export function Navbar() {
     >
       <nav className="container flex h-16 items-center justify-between">
         <a href="#" className="flex items-center gap-2 font-bold text-lg">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-glow">
-            <Rocket className="h-5 w-5 text-primary-foreground" />
-          </span>
-          <span className="gradient-text text-xl">Ecomstation</span>
+          <img src={logo} alt="Ecomstation" className="h-9 w-9 rounded-xl shadow-glow object-cover" />
+          <span className="gradient-text text-xl tracking-tight">ECOMSTATION</span>
         </a>
 
         <div className="hidden md:flex items-center gap-1">
