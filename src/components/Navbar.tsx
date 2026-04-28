@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
+import { useLanguage } from "@/i18n/LanguageProvider";
 import logo from "@/assets/ecomstation-logo.png";
-
-const links = [
-  { href: "#services", label: "সার্ভিস" },
-  { href: "#shop", label: "শপ" },
-  { href: "#why", label: "কেন আমরা" },
-  { href: "#testimonials", label: "রিভিউ" },
-  { href: "#contact", label: "যোগাযোগ" },
-];
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const links = [
+    { href: "#services", label: t("nav_services") },
+    { href: "#shop", label: t("nav_shop") },
+    { href: "#why", label: t("nav_why") },
+    { href: "#testimonials", label: t("nav_testimonials") },
+    { href: "#contact", label: t("nav_contact") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -47,10 +50,11 @@ export function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <LanguageToggle />
           <ThemeToggle />
           <Button variant="hero" size="sm" className="hidden sm:inline-flex" asChild>
-            <a href="#contact">ফ্রি কনসালটেন্সি</a>
+            <a href="#contact">{t("nav_cta")}</a>
           </Button>
           <Button
             variant="ghost"
