@@ -32,10 +32,10 @@ export function Navbar() {
         scrolled ? "glass shadow-soft" : "bg-transparent"
       }`}
     >
-      <nav className="container flex h-16 items-center justify-between">
-        <a href="#" className="flex items-center gap-2 font-bold text-lg">
-          <img src={logo} alt="Ecomstation" className="h-9 w-9 rounded-xl shadow-glow object-cover" />
-          <span className="gradient-text text-xl tracking-tight">ECOMSTATION</span>
+      <nav className="container flex h-16 items-center justify-between gap-3">
+        <a href="#" className="flex items-center gap-2 font-bold text-lg min-w-0 shrink">
+          <img src={logo} alt="Ecomstation" className="h-9 w-9 rounded-xl shadow-glow object-cover shrink-0" />
+          <span className="gradient-text text-base sm:text-xl tracking-tight truncate">ECOMSTATION</span>
         </a>
 
         <div className="hidden md:flex items-center gap-1">
