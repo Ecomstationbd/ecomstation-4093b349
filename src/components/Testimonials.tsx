@@ -1,15 +1,28 @@
+import { useEffect, useState } from "react";
 import { Quote, Star } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import type { TranslationKey } from "@/i18n/translations";
+import { supabase } from "@/integrations/supabase/client";
 
-const reviews: { nKey: TranslationKey; rKey: TranslationKey; xKey: TranslationKey; rating: number }[] = [
-  { nKey: "t1_n", rKey: "t1_r", xKey: "t1_x", rating: 5 },
-  { nKey: "t2_n", rKey: "t2_r", xKey: "t2_x", rating: 5 },
-  { nKey: "t3_n", rKey: "t3_r", xKey: "t3_x", rating: 5 },
-];
+type T = {
+  id: string;
+  name: string;
+  role_bn: string | null;
+  role_en: string | null;
+  quote_bn: string;
+  quote_en: string;
+  rating: number;
+  avatar_url: string | null;
+};
 
 export function Testimonials() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const [reviews, setReviews] = useState<T[]>([]);
+
+  useEffect(() => {
+    supabase.from("testimonials").select("*").eq("is_active", true).order("sort_order")
+      .then(({ data }) => setReviews((data as T[]) || []));
+  }, []);
+
   return (
     <section id="testimonials" className="py-24 bg-secondary/30">
       <div className="container">
@@ -22,26 +35,28 @@ export function Testimonials() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {reviews.map((r) => {
-            const name = t(r.nKey);
+            const role = lang === "bn" ? r.role_bn : r.role_en;
+            const quote = lang === "bn" ? r.quote_bn : r.quote_en;
             return (
-              <div
-                key={r.nKey}
-                className="relative p-8 rounded-2xl bg-gradient-card border border-border/60 hover:shadow-elegant transition-smooth hover:-translate-y-1"
-              >
+              <div key={r.id} className="relative p-8 rounded-2xl bg-gradient-card border border-border/60 hover:shadow-elegant transition-smooth hover:-translate-y-1">
                 <Quote className="absolute top-6 right-6 h-10 w-10 text-primary/15" />
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: r.rating }).map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-warning text-warning" />
                   ))}
                 </div>
-                <p className="text-foreground/90 leading-relaxed mb-6">"{t(r.xKey)}"</p>
+                <p className="text-foreground/90 leading-relaxed mb-6">"{quote}"</p>
                 <div className="flex items-center gap-3 pt-4 border-t border-border/60">
-                  <div className="h-11 w-11 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold">
-                    {name.charAt(0)}
-                  </div>
+                  {r.avatar_url ? (
+                    <img src={r.avatar_url} alt={r.name} className="h-11 w-11 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-11 w-11 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold">
+                      {r.name.charAt(0)}
+                    </div>
+                  )}
                   <div>
-                    <div className="font-semibold">{name}</div>
-                    <div className="text-sm text-muted-foreground">{t(r.rKey)}</div>
+                    <div className="font-semibold">{r.name}</div>
+                    {role && <div className="text-sm text-muted-foreground">{role}</div>}
                   </div>
                 </div>
               </div>

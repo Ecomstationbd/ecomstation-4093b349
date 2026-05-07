@@ -1,10 +1,13 @@
 import { Facebook, Youtube, Instagram, Mail, Phone, MapPin } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
-import logo from "@/assets/ecomstation-logo.png";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import defaultLogo from "@/assets/ecomstation-logo.png";
 
 export function Footer() {
-  const { t, lang } = useLanguage();
-  const phone = lang === "bn" ? "+৮৮০ ১৭০০-০০০০০০" : "+880 1700-000000";
+  const { t } = useLanguage();
+  const settings = useSiteSettings();
+  const phone = settings.contact_phone;
+  const logo = settings.logo_url || defaultLogo;
   return (
     <footer className="border-t border-border bg-secondary/20">
       <div className="container py-16">
@@ -12,7 +15,7 @@ export function Footer() {
           <div>
             <a href="#" className="flex items-center gap-2 font-bold text-lg mb-4">
               <img src={logo} alt="Ecomstation" className="h-9 w-9 rounded-xl shadow-glow object-cover" />
-              <span className="gradient-text text-xl tracking-tight">ECOMSTATION</span>
+              <span className="gradient-text text-xl tracking-tight">{settings.brand_name}</span>
             </a>
             <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-2">{t("footer_tagline")}</p>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">{t("footer_about")}</p>
@@ -54,7 +57,7 @@ export function Footer() {
             <h4 className="font-semibold mb-4">{t("footer_h_contact")}</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-primary" /> {phone}</li>
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-primary" /> hello@ecomstation.com</li>
+              <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-primary" /> {settings.contact_email}</li>
               <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> {t("footer_address")}</li>
             </ul>
           </div>
