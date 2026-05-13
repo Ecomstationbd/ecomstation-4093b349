@@ -6,6 +6,13 @@ import { WhyUs } from "@/components/WhyUs";
 import { Testimonials } from "@/components/Testimonials";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
+import { ChatWidget } from "@/components/ChatWidget";
+import { useReveal } from "@/hooks/useReveal";
+
+function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useReveal<HTMLDivElement>();
+  return <div ref={ref} style={{ transitionDelay: `${delay}ms` }}>{children}</div>;
+}
 
 const Index = () => {
   return (
@@ -13,13 +20,14 @@ const Index = () => {
       <Navbar />
       <main>
         <Hero />
-        <Services />
-        <Shop />
-        <WhyUs />
-        <Testimonials />
-        <CTA />
+        <Reveal><Services /></Reveal>
+        <Reveal><Shop /></Reveal>
+        <Reveal><WhyUs /></Reveal>
+        <Reveal><Testimonials /></Reveal>
+        <Reveal><CTA /></Reveal>
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 };
