@@ -77,6 +77,7 @@ export default function Admin() {
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="contacts">Messages</TabsTrigger>
+            <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -85,6 +86,7 @@ export default function Admin() {
           <TabsContent value="testimonials" className="mt-4"><TestimonialsAdmin /></TabsContent>
           <TabsContent value="orders" className="mt-4"><OrdersAdmin /></TabsContent>
           <TabsContent value="contacts" className="mt-4"><ContactsAdmin /></TabsContent>
+          <TabsContent value="chatbot" className="mt-4"><ChatbotAdmin /></TabsContent>
           <TabsContent value="settings" className="mt-4"><SettingsAdmin /></TabsContent>
         </Tabs>
       </main>
@@ -476,6 +478,116 @@ function SettingsAdmin() {
           <Button size="sm" variant="hero" onClick={() => save(f.k)}>Save</Button>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ---------- Chatbot Training & Conversations ---------- */
+function ChatbotAdmin() {
+  const KEYS = ["chatbot_enabled", "chatbot_welcome_bn", "chatbot_welcome_en", "chatbot_system_prompt", "chatbot_knowledge"];
+  const [s, setS] = useState<Record<string, string>>({});
+  const [convs, setConvs] = useState<any[]>([]);
+  const [activeConv, setActiveConv] = useState<any | null>(null);
+  const [msgs, setMsgs] = useState<any[]>([]);
+
+  const loadSettings = async () => {
+    const { data } = await supabase.from("site_settings").select("*").in("key", KEYS);
+    const o: Record<string, string> = {};
+    (data || []).forEach((r: any) => { o[r.key] = r.value || ""; });
+    setS(o);
+  };
+  const loadConvs = async () => {
+    const { data } = await supabase.from("chat_conversations").select("*").order("updated_at", { ascending: false }).limit(100);
+    setConvs(data || []);
+  };
+  useEffect(() => { loadSettings(); loadConvs(); }, []);
+
+  const openConv = async (c: any) => {
+    setActiveConv(c);
+    const { data } = await supabase.from("chat_messages").select("*").eq("conversation_id", c.id).order("created_at");
+    setMsgs(data || []);
+  };
+
+  const saveAll = async () => {
+    const rows = KEYS.map((k) => ({ key: k, value: s[k] ?? "" }));
+    const { error } = await supabase.from("site_settings").upsert(rows);
+    if (error) return toast.error(error.message);
+    toast.success("Chatbot settings saved");
+  };
+
+  const markResolved = async (id: string) => {
+    await supabase.from("chat_conversations").update({ status: "resolved", escalated: false }).eq("id", id);
+    toast.success("Marked resolved"); loadConvs();
+  };
+  const deleteConv = async (id: string) => {
+    if (!confirm("Delete this conversation?")) return;
+    await supabase.from("chat_conversations").delete().eq("id", id);
+    setActiveConv(null); setMsgs([]); loadConvs();
+  };
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-6">
+      <div className="space-y-3">
+        <h2 className="text-xl font-bold">AI Chatbot Training</h2>
+        <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Enabled on landing page</Label>
+            <Switch checked={s.chatbot_enabled !== "false"} onCheckedChange={(v) => setS({ ...s, chatbot_enabled: v ? "true" : "false" })} />
+          </div>
+          <div>
+            <Label>Welcome message (Bengali)</Label>
+            <Textarea rows={2} value={s.chatbot_welcome_bn || ""} onChange={(e) => setS({ ...s, chatbot_welcome_bn: e.target.value })} />
+          </div>
+          <div>
+            <Label>Welcome message (English)</Label>
+            <Textarea rows={2} value={s.chatbot_welcome_en || ""} onChange={(e) => setS({ ...s, chatbot_welcome_en: e.target.value })} />
+          </div>
+          <div>
+            <Label>System Prompt (personality & rules)</Label>
+            <Textarea rows={6} value={s.chatbot_system_prompt || ""} onChange={(e) => setS({ ...s, chatbot_system_prompt: e.target.value })} placeholder="You are a friendly support agent for..." />
+          </div>
+          <div>
+            <Label>Knowledge Base (FAQ, prices, policies)</Label>
+            <Textarea rows={10} value={s.chatbot_knowledge || ""} onChange={(e) => setS({ ...s, chatbot_knowledge: e.target.value })} placeholder="Services, pricing, hours, FAQs — anything the bot should know." />
+          </div>
+          <Button variant="hero" onClick={saveAll}>Save Training</Button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-xl font-bold">Conversations</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="bg-card border border-border rounded-lg p-2 max-h-[600px] overflow-y-auto space-y-1">
+            {convs.length === 0 && <div className="text-sm text-muted-foreground p-3">No conversations yet.</div>}
+            {convs.map((c) => (
+              <button key={c.id} onClick={() => openConv(c)} className={`w-full text-left p-2 rounded-md hover:bg-secondary ${activeConv?.id === c.id ? "bg-secondary" : ""}`}>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium truncate">{c.visitor_name || "Anonymous"}</div>
+                  {c.escalated && <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/20 text-foreground">ESCALATED</span>}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">{c.visitor_contact || c.id.slice(0, 8)}</div>
+                <div className="text-[10px] text-muted-foreground">{new Date(c.updated_at).toLocaleString()} · {c.status}</div>
+              </button>
+            ))}
+          </div>
+          <div className="bg-card border border-border rounded-lg p-3 max-h-[600px] overflow-y-auto">
+            {!activeConv ? <div className="text-sm text-muted-foreground">Select a conversation</div> : (
+              <div className="space-y-2">
+                <div className="flex gap-2 mb-2">
+                  <Button size="sm" variant="outline" onClick={() => markResolved(activeConv.id)}>Resolve</Button>
+                  <Button size="sm" variant="destructive" onClick={() => deleteConv(activeConv.id)}><Trash2 className="h-3 w-3" /></Button>
+                </div>
+                {msgs.map((m) => (
+                  <div key={m.id} className={`text-sm p-2 rounded-md ${m.role === "user" ? "bg-primary/10" : m.role === "assistant" ? "bg-secondary" : "bg-accent/20 italic"}`}>
+                    <div className="text-[10px] uppercase text-muted-foreground mb-0.5">{m.role}</div>
+                    <div className="whitespace-pre-wrap">{m.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
