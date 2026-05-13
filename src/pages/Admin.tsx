@@ -77,6 +77,7 @@ export default function Admin() {
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="contacts">Messages</TabsTrigger>
+            <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -85,6 +86,7 @@ export default function Admin() {
           <TabsContent value="testimonials" className="mt-4"><TestimonialsAdmin /></TabsContent>
           <TabsContent value="orders" className="mt-4"><OrdersAdmin /></TabsContent>
           <TabsContent value="contacts" className="mt-4"><ContactsAdmin /></TabsContent>
+          <TabsContent value="chatbot" className="mt-4"><ChatbotAdmin /></TabsContent>
           <TabsContent value="settings" className="mt-4"><SettingsAdmin /></TabsContent>
         </Tabs>
       </main>
