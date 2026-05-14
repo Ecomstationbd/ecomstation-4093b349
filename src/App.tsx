@@ -11,6 +11,9 @@ import { CartDrawer } from "@/components/CartDrawer";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import Admin from "./pages/Admin.tsx";
+import ProductDetail from "./pages/ProductDetail.tsx";
+import CategoryPage from "./pages/CategoryPage.tsx";
+import ServiceDetail from "./pages/ServiceDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -29,6 +32,9 @@ const App = () => (
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/product/:slug" element={<ProductDetail />} />
+                  <Route path="/category/:slug" element={<CategoryPage />} />
+                  <Route path="/service/:slug" element={<ServiceDetail />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <CartDrawer />

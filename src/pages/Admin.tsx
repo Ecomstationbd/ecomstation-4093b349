@@ -73,6 +73,7 @@ export default function Admin() {
         <Tabs defaultValue="services">
           <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="services">Services</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
@@ -82,6 +83,7 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="services" className="mt-4"><ServicesAdmin /></TabsContent>
+          <TabsContent value="categories" className="mt-4"><CategoriesAdmin /></TabsContent>
           <TabsContent value="products" className="mt-4"><ProductsAdmin /></TabsContent>
           <TabsContent value="testimonials" className="mt-4"><TestimonialsAdmin /></TabsContent>
           <TabsContent value="orders" className="mt-4"><OrdersAdmin /></TabsContent>
@@ -151,18 +153,29 @@ function ServicesAdmin() {
 }
 function ServiceForm({ value, onChange, onSave }: any) {
   const set = (k: string, v: any) => onChange({ ...value, [k]: v });
+  const features: string[] = Array.isArray(value.features) ? value.features : [];
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
-        <div><Label>Slug</Label><Input value={value.slug} onChange={(e) => set("slug", e.target.value)} /></div>
-        <div><Label>Icon (Lucide name)</Label><Input value={value.icon || ""} onChange={(e) => set("icon", e.target.value)} placeholder="e.g. Globe, Megaphone" /></div>
+        <div><Label>Slug (URL)</Label><Input value={value.slug} onChange={(e) => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} placeholder="web-design" /></div>
+        <div><Label>Icon (Lucide name)</Label><Input value={value.icon || ""} onChange={(e) => set("icon", e.target.value)} placeholder="Globe, Megaphone..." /></div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div><Label>Title (BN)</Label><Input value={value.title_bn} onChange={(e) => set("title_bn", e.target.value)} /></div>
         <div><Label>Title (EN)</Label><Input value={value.title_en} onChange={(e) => set("title_en", e.target.value)} /></div>
       </div>
-      <div><Label>Description (BN)</Label><Textarea value={value.description_bn || ""} onChange={(e) => set("description_bn", e.target.value)} /></div>
-      <div><Label>Description (EN)</Label><Textarea value={value.description_en || ""} onChange={(e) => set("description_en", e.target.value)} /></div>
+      <div><Label>Short Description (BN)</Label><Textarea rows={2} value={value.description_bn || ""} onChange={(e) => set("description_bn", e.target.value)} /></div>
+      <div><Label>Short Description (EN)</Label><Textarea rows={2} value={value.description_en || ""} onChange={(e) => set("description_en", e.target.value)} /></div>
+      <div><Label>Full Content (BN) — shown on detail page</Label><Textarea rows={5} value={value.content_bn || ""} onChange={(e) => set("content_bn", e.target.value)} /></div>
+      <div><Label>Full Content (EN)</Label><Textarea rows={5} value={value.content_en || ""} onChange={(e) => set("content_en", e.target.value)} /></div>
+      <div className="grid grid-cols-2 gap-2">
+        <div><Label>Image URL</Label><Input value={value.image_url || ""} onChange={(e) => set("image_url", e.target.value)} /></div>
+        <div><Label>Price label</Label><Input value={value.price_text || ""} onChange={(e) => set("price_text", e.target.value)} placeholder="৳5,000 থেকে" /></div>
+      </div>
+      <div>
+        <Label>Features (one per line)</Label>
+        <Textarea rows={4} value={features.join("\n")} onChange={(e) => set("features", e.target.value.split("\n").map((s) => s.trim()).filter(Boolean))} placeholder="Free domain&#10;SSL included&#10;1 year support" />
+      </div>
       <div className="grid grid-cols-3 gap-2">
         <div><Label>Badge</Label><Input value={value.badge || ""} onChange={(e) => set("badge", e.target.value)} /></div>
         <div><Label>Sort</Label><Input type="number" value={value.sort_order} onChange={(e) => set("sort_order", parseInt(e.target.value) || 0)} /></div>
@@ -179,10 +192,27 @@ function ServiceForm({ value, onChange, onSave }: any) {
 /* ---------- Products ---------- */
 function ProductsAdmin() {
   const [items, setItems] = useState<Product[]>([]);
+  const [cats, setCats] = useState<any[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
+  const [variants, setVariants] = useState<any[]>([]);
   const load = () => supabase.from("products").select("*").order("sort_order").then(({ data }) => setItems(data || []));
-  useEffect(() => { load(); }, []);
+  const loadCats = () => supabase.from("categories").select("*").order("sort_order").then(({ data }) => setCats(data || []));
+  useEffect(() => { load(); loadCats(); }, []);
+
+  const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  const openEdit = async (p: Product | null) => {
+    if (p?.id) {
+      setEditing(p);
+      const { data } = await supabase.from("product_variants").select("*").eq("product_id", p.id).order("sort_order");
+      setVariants(data || []);
+    } else {
+      setEditing({ slug: "", name_bn: "", name_en: "", description_bn: "", description_en: "", price: 0, old_price: null, category: "physical", category_id: null, badge: "", image_url: "", gallery: [], stock: null, is_active: true, sort_order: items.length + 1 });
+      setVariants([]);
+    }
+    setOpen(true);
+  };
 
   const save = async () => {
     if (!editing) return;
@@ -190,11 +220,38 @@ function ProductsAdmin() {
     delete payload.id; delete payload.created_at; delete payload.updated_at;
     payload.price = Number(payload.price);
     payload.old_price = payload.old_price ? Number(payload.old_price) : null;
-    const { error } = editing.id
-      ? await supabase.from("products").update(payload).eq("id", editing.id)
-      : await supabase.from("products").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Saved"); setOpen(false); setEditing(null); load();
+    payload.stock = payload.stock === "" || payload.stock == null ? null : Number(payload.stock);
+    if (!payload.slug) payload.slug = slugify(payload.name_en || payload.name_bn || "product") + "-" + Math.random().toString(36).slice(2, 7);
+    if (typeof payload.gallery === "string") {
+      payload.gallery = payload.gallery.split("\n").map((s: string) => s.trim()).filter(Boolean);
+    }
+
+    let productId = editing.id;
+    if (productId) {
+      const { error } = await supabase.from("products").update(payload).eq("id", productId);
+      if (error) return toast.error(error.message);
+    } else {
+      const { data, error } = await supabase.from("products").insert(payload).select().single();
+      if (error) return toast.error(error.message);
+      productId = data.id;
+    }
+
+    // Sync variants
+    await supabase.from("product_variants").delete().eq("product_id", productId);
+    const valid = variants.filter((v) => v.name_en || v.name_bn);
+    if (valid.length) {
+      await supabase.from("product_variants").insert(valid.map((v, i) => ({
+        product_id: productId,
+        name_bn: v.name_bn || v.name_en,
+        name_en: v.name_en || v.name_bn,
+        price_delta: Number(v.price_delta) || 0,
+        stock: v.stock === "" || v.stock == null ? null : Number(v.stock),
+        sort_order: i,
+        is_active: v.is_active !== false,
+      })));
+    }
+
+    toast.success("Saved"); setOpen(false); setEditing(null); setVariants([]); load();
   };
   const del = async (id: string) => {
     if (!confirm("Delete?")) return;
@@ -203,11 +260,13 @@ function ProductsAdmin() {
     toast.success("Deleted"); load();
   };
 
+  const galleryStr = Array.isArray(editing?.gallery) ? editing.gallery.join("\n") : (editing?.gallery || "");
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Products ({items.length})</h2>
-        <Button variant="hero" size="sm" onClick={() => { setEditing({ name_bn: "", name_en: "", price: 0, old_price: null, category: "physical", badge: "", image_url: "", is_active: true, sort_order: items.length + 1 }); setOpen(true); }}>
+        <Button variant="hero" size="sm" onClick={() => openEdit(null)}>
           <Plus className="h-4 w-4 mr-1" />Add Product
         </Button>
       </div>
@@ -216,38 +275,149 @@ function ProductsAdmin() {
           <div key={p.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
             <div className="min-w-0 flex-1">
               <div className="font-semibold truncate">{p.name_en} <span className="text-muted-foreground">/ {p.name_bn}</span></div>
-              <div className="text-xs text-muted-foreground">৳{p.price} • {p.category} {!p.is_active && "• Hidden"}</div>
+              <div className="text-xs text-muted-foreground">৳{p.price} • {p.category} • /{p.slug} {!p.is_active && "• Hidden"}</div>
             </div>
             <div className="flex gap-1">
-              <Button size="icon" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+              <Button size="icon" variant="ghost" onClick={() => openEdit(p)}><Edit className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost" className="text-destructive" onClick={() => del(p.id)}><Trash2 className="h-4 w-4" /></Button>
             </div>
           </div>
         ))}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
           <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Product</DialogTitle></DialogHeader>
           {editing && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Name (BN)</Label><Input value={editing.name_bn} onChange={(e) => setEditing({ ...editing, name_bn: e.target.value })} /></div>
-                <div><Label>Name (EN)</Label><Input value={editing.name_en} onChange={(e) => setEditing({ ...editing, name_en: e.target.value })} /></div>
+                <div><Label>Name (EN)</Label><Input value={editing.name_en} onChange={(e) => setEditing({ ...editing, name_en: e.target.value, slug: editing.slug || slugify(e.target.value) })} /></div>
               </div>
+              <div><Label>Slug (URL)</Label><Input value={editing.slug || ""} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} placeholder="auto-generated" /></div>
+              <div><Label>Description (BN)</Label><Textarea rows={3} value={editing.description_bn || ""} onChange={(e) => setEditing({ ...editing, description_bn: e.target.value })} /></div>
+              <div><Label>Description (EN)</Label><Textarea rows={3} value={editing.description_en || ""} onChange={(e) => setEditing({ ...editing, description_en: e.target.value })} /></div>
               <div className="grid grid-cols-3 gap-2">
                 <div><Label>Price</Label><Input type="number" value={editing.price} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></div>
                 <div><Label>Old Price</Label><Input type="number" value={editing.old_price || ""} onChange={(e) => setEditing({ ...editing, old_price: e.target.value })} /></div>
-                <div><Label>Category</Label>
+                <div><Label>Stock</Label><Input type="number" value={editing.stock ?? ""} onChange={(e) => setEditing({ ...editing, stock: e.target.value })} placeholder="∞" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label>Type</Label>
                   <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="physical">Physical</SelectItem><SelectItem value="digital">Digital</SelectItem></SelectContent>
                   </Select>
                 </div>
+                <div><Label>Category</Label>
+                  <Select value={editing.category_id || "none"} onValueChange={(v) => setEditing({ ...editing, category_id: v === "none" ? null : v })}>
+                    <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— None —</SelectItem>
+                      {cats.map((c) => <SelectItem key={c.id} value={c.id}>{c.name_en}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Badge</Label><Input value={editing.badge || ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} /></div>
-                <div><Label>Image URL</Label><Input value={editing.image_url || ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></div>
+                <div><Label>Main Image URL</Label><Input value={editing.image_url || ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></div>
               </div>
+              <div><Label>Gallery (one URL per line)</Label><Textarea rows={3} value={galleryStr} onChange={(e) => setEditing({ ...editing, gallery: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} /></div>
+
+              <div className="border-t border-border pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Variants</Label>
+                  <Button size="sm" variant="outline" type="button" onClick={() => setVariants([...variants, { name_bn: "", name_en: "", price_delta: 0, stock: null, is_active: true }])}>
+                    <Plus className="h-3 w-3 mr-1" />Add Variant
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {variants.map((v, idx) => (
+                    <div key={idx} className="grid grid-cols-12 gap-1 items-end bg-secondary/30 p-2 rounded-lg">
+                      <div className="col-span-3"><Input placeholder="Name BN" value={v.name_bn} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, name_bn: e.target.value }; setVariants(c); }} /></div>
+                      <div className="col-span-3"><Input placeholder="Name EN" value={v.name_en} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, name_en: e.target.value }; setVariants(c); }} /></div>
+                      <div className="col-span-3"><Input type="number" placeholder="Price ±" value={v.price_delta} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, price_delta: e.target.value }; setVariants(c); }} /></div>
+                      <div className="col-span-2"><Input type="number" placeholder="Stock" value={v.stock ?? ""} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, stock: e.target.value }; setVariants(c); }} /></div>
+                      <div className="col-span-1"><Button size="icon" variant="ghost" type="button" onClick={() => setVariants(variants.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>
+                    </div>
+                  ))}
+                  {variants.length === 0 && <div className="text-xs text-muted-foreground">No variants. Customers will buy the base product.</div>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label>Sort</Label><Input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: parseInt(e.target.value) || 0 })} /></div>
+                <label className="flex items-center gap-2 mt-6"><Switch checked={editing.is_active} onCheckedChange={(c) => setEditing({ ...editing, is_active: c })} /> Active</label>
+              </div>
+              <Button variant="hero" className="w-full" onClick={save}>Save</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ---------- Categories ---------- */
+function CategoriesAdmin() {
+  const [items, setItems] = useState<any[]>([]);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () => supabase.from("categories").select("*").order("sort_order").then(({ data }) => setItems(data || []));
+  useEffect(() => { load(); }, []);
+  const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  const save = async () => {
+    if (!editing) return;
+    const p: any = { ...editing }; delete p.id; delete p.created_at; delete p.updated_at;
+    if (!p.slug) p.slug = slugify(p.name_en || p.name_bn);
+    const { error } = editing.id
+      ? await supabase.from("categories").update(p).eq("id", editing.id)
+      : await supabase.from("categories").insert(p);
+    if (error) return toast.error(error.message);
+    toast.success("Saved"); setOpen(false); setEditing(null); load();
+  };
+  const del = async (id: string) => {
+    if (!confirm("Delete category?")) return;
+    await supabase.from("categories").delete().eq("id", id);
+    load();
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Categories ({items.length})</h2>
+        <Button variant="hero" size="sm" onClick={() => { setEditing({ slug: "", name_bn: "", name_en: "", description_bn: "", description_en: "", image_url: "", is_active: true, sort_order: items.length + 1 }); setOpen(true); }}>
+          <Plus className="h-4 w-4 mr-1" />Add Category
+        </Button>
+      </div>
+      <div className="grid gap-2">
+        {items.map((c) => (
+          <div key={c.id} className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold truncate">{c.name_en} <span className="text-muted-foreground">/ {c.name_bn}</span></div>
+              <div className="text-xs text-muted-foreground">/category/{c.slug} {!c.is_active && "• Hidden"}</div>
+            </div>
+            <div className="flex gap-1">
+              <Button size="icon" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+              <Button size="icon" variant="ghost" className="text-destructive" onClick={() => del(c.id)}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editing?.id ? "Edit" : "Add"} Category</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label>Name (BN)</Label><Input value={editing.name_bn} onChange={(e) => setEditing({ ...editing, name_bn: e.target.value })} /></div>
+                <div><Label>Name (EN)</Label><Input value={editing.name_en} onChange={(e) => setEditing({ ...editing, name_en: e.target.value, slug: editing.slug || slugify(e.target.value) })} /></div>
+              </div>
+              <div><Label>Slug</Label><Input value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })} /></div>
+              <div><Label>Description (BN)</Label><Textarea rows={2} value={editing.description_bn || ""} onChange={(e) => setEditing({ ...editing, description_bn: e.target.value })} /></div>
+              <div><Label>Description (EN)</Label><Textarea rows={2} value={editing.description_en || ""} onChange={(e) => setEditing({ ...editing, description_en: e.target.value })} /></div>
+              <div><Label>Image URL</Label><Input value={editing.image_url || ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Sort</Label><Input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: parseInt(e.target.value) || 0 })} /></div>
                 <label className="flex items-center gap-2 mt-6"><Switch checked={editing.is_active} onCheckedChange={(c) => setEditing({ ...editing, is_active: c })} /> Active</label>

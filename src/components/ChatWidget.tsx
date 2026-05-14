@@ -92,15 +92,19 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-gradient-primary text-primary-foreground shadow-glow flex items-center justify-center hover:scale-110 transition-smooth animate-glow-pulse"
+          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-gradient-primary text-primary-foreground shadow-glow flex items-center justify-center hover:scale-110 transition-smooth animate-glow-pulse group"
           aria-label="Open chat"
         >
-          <MessageCircle className="h-6 w-6" />
+          <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-background animate-pulse" />
+          <span className="absolute right-full mr-3 hidden sm:block whitespace-nowrap px-3 py-1.5 rounded-full bg-card text-foreground text-xs font-medium shadow-elegant border border-border/60 opacity-0 group-hover:opacity-100 transition-smooth pointer-events-none">
+            {lang === "bn" ? "যেকোনো প্রশ্ন? চ্যাট করুন!" : "Need help? Chat with us!"}
+          </span>
         </button>
       )}
 
       {open && (
-        <div className="fixed bottom-5 right-5 z-50 w-[calc(100vw-2.5rem)] sm:w-96 h-[70vh] sm:h-[32rem] rounded-2xl glass shadow-elegant border border-border/60 flex flex-col overflow-hidden animate-fade-up">
+        <div className="fixed bottom-20 sm:bottom-24 right-3 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-[26rem] max-w-md h-[75vh] sm:h-[34rem] rounded-2xl glass shadow-elegant border border-border/60 flex flex-col overflow-hidden animate-fade-up">
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-primary text-primary-foreground">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
