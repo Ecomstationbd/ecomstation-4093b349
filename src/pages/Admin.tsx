@@ -73,6 +73,7 @@ export default function Admin() {
         <Tabs defaultValue="services">
           <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="services">Services</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
@@ -82,6 +83,7 @@ export default function Admin() {
           </TabsList>
 
           <TabsContent value="services" className="mt-4"><ServicesAdmin /></TabsContent>
+          <TabsContent value="categories" className="mt-4"><CategoriesAdmin /></TabsContent>
           <TabsContent value="products" className="mt-4"><ProductsAdmin /></TabsContent>
           <TabsContent value="testimonials" className="mt-4"><TestimonialsAdmin /></TabsContent>
           <TabsContent value="orders" className="mt-4"><OrdersAdmin /></TabsContent>
