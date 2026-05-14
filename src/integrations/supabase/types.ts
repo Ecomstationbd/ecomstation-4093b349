@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          description_bn: string | null
+          description_en: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name_bn: string
+          name_en: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_bn?: string | null
+          description_en?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_bn: string
+          name_en: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_bn?: string | null
+          description_en?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_bn?: string
+          name_en?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -193,13 +235,59 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variants: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name_bn: string
+          name_en: string
+          price_delta: number
+          product_id: string
+          sort_order: number
+          stock: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_bn: string
+          name_en: string
+          price_delta?: number
+          product_id: string
+          sort_order?: number
+          stock?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_bn?: string
+          name_en?: string
+          price_delta?: number
+          product_id?: string
+          sort_order?: number
+          stock?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           badge: string | null
           category: string
+          category_id: string | null
           created_at: string
           description_bn: string | null
           description_en: string | null
+          gallery: Json
           id: string
           image_url: string | null
           is_active: boolean
@@ -207,15 +295,19 @@ export type Database = {
           name_en: string
           old_price: number | null
           price: number
+          slug: string
           sort_order: number
+          stock: number | null
           updated_at: string
         }
         Insert: {
           badge?: string | null
           category: string
+          category_id?: string | null
           created_at?: string
           description_bn?: string | null
           description_en?: string | null
+          gallery?: Json
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -223,15 +315,19 @@ export type Database = {
           name_en: string
           old_price?: number | null
           price: number
+          slug: string
           sort_order?: number
+          stock?: number | null
           updated_at?: string
         }
         Update: {
           badge?: string | null
           category?: string
+          category_id?: string | null
           created_at?: string
           description_bn?: string | null
           description_en?: string | null
+          gallery?: Json
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -239,22 +335,37 @@ export type Database = {
           name_en?: string
           old_price?: number | null
           price?: number
+          slug?: string
           sort_order?: number
+          stock?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
           badge: string | null
           coming_soon: boolean
+          content_bn: string | null
+          content_en: string | null
           created_at: string
           description_bn: string | null
           description_en: string | null
+          features: Json
           icon: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           price: number | null
+          price_text: string | null
           slug: string
           sort_order: number
           title_bn: string
@@ -264,13 +375,18 @@ export type Database = {
         Insert: {
           badge?: string | null
           coming_soon?: boolean
+          content_bn?: string | null
+          content_en?: string | null
           created_at?: string
           description_bn?: string | null
           description_en?: string | null
+          features?: Json
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           price?: number | null
+          price_text?: string | null
           slug: string
           sort_order?: number
           title_bn: string
@@ -280,13 +396,18 @@ export type Database = {
         Update: {
           badge?: string | null
           coming_soon?: boolean
+          content_bn?: string | null
+          content_en?: string | null
           created_at?: string
           description_bn?: string | null
           description_en?: string | null
+          features?: Json
           icon?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           price?: number | null
+          price_text?: string | null
           slug?: string
           sort_order?: number
           title_bn?: string
