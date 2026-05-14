@@ -153,18 +153,29 @@ function ServicesAdmin() {
 }
 function ServiceForm({ value, onChange, onSave }: any) {
   const set = (k: string, v: any) => onChange({ ...value, [k]: v });
+  const features: string[] = Array.isArray(value.features) ? value.features : [];
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
-        <div><Label>Slug</Label><Input value={value.slug} onChange={(e) => set("slug", e.target.value)} /></div>
-        <div><Label>Icon (Lucide name)</Label><Input value={value.icon || ""} onChange={(e) => set("icon", e.target.value)} placeholder="e.g. Globe, Megaphone" /></div>
+        <div><Label>Slug (URL)</Label><Input value={value.slug} onChange={(e) => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))} placeholder="web-design" /></div>
+        <div><Label>Icon (Lucide name)</Label><Input value={value.icon || ""} onChange={(e) => set("icon", e.target.value)} placeholder="Globe, Megaphone..." /></div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div><Label>Title (BN)</Label><Input value={value.title_bn} onChange={(e) => set("title_bn", e.target.value)} /></div>
         <div><Label>Title (EN)</Label><Input value={value.title_en} onChange={(e) => set("title_en", e.target.value)} /></div>
       </div>
-      <div><Label>Description (BN)</Label><Textarea value={value.description_bn || ""} onChange={(e) => set("description_bn", e.target.value)} /></div>
-      <div><Label>Description (EN)</Label><Textarea value={value.description_en || ""} onChange={(e) => set("description_en", e.target.value)} /></div>
+      <div><Label>Short Description (BN)</Label><Textarea rows={2} value={value.description_bn || ""} onChange={(e) => set("description_bn", e.target.value)} /></div>
+      <div><Label>Short Description (EN)</Label><Textarea rows={2} value={value.description_en || ""} onChange={(e) => set("description_en", e.target.value)} /></div>
+      <div><Label>Full Content (BN) — shown on detail page</Label><Textarea rows={5} value={value.content_bn || ""} onChange={(e) => set("content_bn", e.target.value)} /></div>
+      <div><Label>Full Content (EN)</Label><Textarea rows={5} value={value.content_en || ""} onChange={(e) => set("content_en", e.target.value)} /></div>
+      <div className="grid grid-cols-2 gap-2">
+        <div><Label>Image URL</Label><Input value={value.image_url || ""} onChange={(e) => set("image_url", e.target.value)} /></div>
+        <div><Label>Price label</Label><Input value={value.price_text || ""} onChange={(e) => set("price_text", e.target.value)} placeholder="৳5,000 থেকে" /></div>
+      </div>
+      <div>
+        <Label>Features (one per line)</Label>
+        <Textarea rows={4} value={features.join("\n")} onChange={(e) => set("features", e.target.value.split("\n").map((s) => s.trim()).filter(Boolean))} placeholder="Free domain&#10;SSL included&#10;1 year support" />
+      </div>
       <div className="grid grid-cols-3 gap-2">
         <div><Label>Badge</Label><Input value={value.badge || ""} onChange={(e) => set("badge", e.target.value)} /></div>
         <div><Label>Sort</Label><Input type="number" value={value.sort_order} onChange={(e) => set("sort_order", parseInt(e.target.value) || 0)} /></div>
