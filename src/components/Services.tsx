@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 type Service = {
+  slug: string;
   id: string;
   title_bn: string;
   title_en: string;
@@ -41,7 +43,7 @@ export function Services() {
             const desc = lang === "bn" ? s.description_bn : s.description_en;
             const tag = s.coming_soon ? (lang === "bn" ? "শীঘ্রই আসছে" : "Coming Soon") : s.badge;
             return (
-              <div key={s.id} className="group relative p-6 rounded-2xl bg-gradient-card border border-border/60 hover:border-primary/50 transition-smooth hover:-translate-y-1 hover:shadow-elegant overflow-hidden" style={{ animationDelay: `${i * 50}ms` }}>
+              <Link key={s.id} to={`/service/${s.slug}`} className="group relative p-6 rounded-2xl bg-gradient-card border border-border/60 hover:border-primary/50 transition-smooth hover:-translate-y-1 hover:shadow-elegant overflow-hidden block" style={{ animationDelay: `${i * 50}ms` }}>
                 <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-gradient-primary opacity-0 group-hover:opacity-20 blur-2xl transition-smooth" />
                 {tag && (
                   <span className="absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-accent text-accent-foreground uppercase tracking-wider">
@@ -53,9 +55,12 @@ export function Services() {
                     <Icon className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-smooth">{title}</h3>
-                  {desc && <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>}
+                  {desc && <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{desc}</p>}
+                  <div className="mt-3 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-smooth">
+                    {lang === "bn" ? "বিস্তারিত দেখুন →" : "View details →"}
+                  </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
