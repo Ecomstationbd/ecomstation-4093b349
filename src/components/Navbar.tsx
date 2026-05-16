@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X, ShoppingCart, ShieldCheck } from "lucide-react";
+import { Menu, X, ShoppingCart, ShieldCheck, LayoutDashboard, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
@@ -15,7 +15,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const { t } = useLanguage();
   const { count, setOpen: setCartOpen } = useCart();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const settings = useSiteSettings();
 
   const links = [
@@ -63,6 +63,16 @@ export function Navbar() {
           {isAdmin && (
             <Button variant="ghost" size="icon" asChild aria-label="Admin">
               <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
+            </Button>
+          )}
+          {user && !isAdmin && (
+            <Button variant="ghost" size="icon" asChild aria-label="Dashboard">
+              <Link to="/dashboard"><LayoutDashboard className="h-5 w-5 text-primary" /></Link>
+            </Button>
+          )}
+          {!user && (
+            <Button variant="ghost" size="icon" asChild aria-label="Login">
+              <Link to="/auth"><LogIn className="h-5 w-5" /></Link>
             </Button>
           )}
           <Button variant="hero" size="sm" className="hidden sm:inline-flex" asChild>

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -18,6 +19,7 @@ const schema = z.object({
 
 export function ContactForm() {
   const { lang } = useLanguage();
+  const { user } = useAuth();
   const bn = lang === "bn";
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,7 @@ export function ContactForm() {
       phone: parsed.data.phone || null,
       subject: parsed.data.subject || null,
       message: parsed.data.message,
+      user_id: user?.id ?? null,
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
