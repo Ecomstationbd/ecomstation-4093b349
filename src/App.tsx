@@ -8,9 +8,11 @@ import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import { CartDrawer } from "@/components/CartDrawer";
+import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import Admin from "./pages/Admin.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
 import ProductDetail from "./pages/ProductDetail.tsx";
 import CategoryPage from "./pages/CategoryPage.tsx";
 import ServiceDetail from "./pages/ServiceDetail.tsx";
@@ -27,11 +29,13 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <SplashScreen />
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/product/:slug" element={<ProductDetail />} />
                   <Route path="/category/:slug" element={<CategoryPage />} />
                   <Route path="/service/:slug" element={<ServiceDetail />} />
