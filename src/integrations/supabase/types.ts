@@ -128,6 +128,7 @@ export type Database = {
           name: string
           phone: string | null
           subject: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -138,6 +139,7 @@ export type Database = {
           name: string
           phone?: string | null
           subject?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -148,6 +150,7 @@ export type Database = {
           name?: string
           phone?: string | null
           subject?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -208,6 +211,7 @@ export type Database = {
           status: string
           total: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -220,6 +224,7 @@ export type Database = {
           status?: string
           total?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -232,6 +237,7 @@ export type Database = {
           status?: string
           total?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -349,6 +355,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
