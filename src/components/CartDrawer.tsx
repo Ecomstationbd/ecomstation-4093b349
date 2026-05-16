@@ -8,6 +8,7 @@ import { Trash2, Minus, Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -21,6 +22,7 @@ const orderSchema = z.object({
 
 export function CartDrawer() {
   const { items, open, setOpen, setQty, remove, total, clear } = useCart();
+  const { user } = useAuth();
   const { lang } = useLanguage();
   const bn = lang === "bn";
   const [form, setForm] = useState({ customer_name: "", customer_phone: "", customer_email: "", customer_address: "", notes: "" });
@@ -41,6 +43,7 @@ export function CartDrawer() {
       customer_address: parsed.data.customer_address || null,
       notes: parsed.data.notes || null,
       total,
+      user_id: user?.id ?? null,
     }).select().single();
     if (error || !order) { toast.error(error?.message || "Error"); setSubmitting(false); return; }
 
