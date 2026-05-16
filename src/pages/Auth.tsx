@@ -16,7 +16,7 @@ const schema = z.object({
 });
 
 export default function Auth() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const nav = useNavigate();
   const { lang } = useLanguage();
   const bn = lang === "bn";
@@ -25,11 +25,13 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!loading && user) nav("/admin", { replace: true });
-  }, [user, loading, nav]);
+  const redirectFor = (admin: boolean) => (admin ? "/admin" : "/dashboard");
 
-  if (user) return <Navigate to="/admin" replace />;
+  useEffect(() => {
+    if (!loading && user) nav(redirectFor(isAdmin), { replace: true });
+  }, [user, loading, isAdmin, nav]);
+
+  if (user) return <Navigate to={redirectFor(isAdmin)} replace />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function Auth() {
     if (mode === "signup") {
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: `${window.location.origin}/admin` },
+        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) toast.error(error.message);
       else toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে! লগইন করুন।" : "Account created! Sign in.");
@@ -51,18 +53,20 @@ export default function Auth() {
   };
 
   const google = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/admin` });
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/dashboard` });
     if (r.error) toast.error("Google sign in failed");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-elegant p-8">
-        <h1 className="text-2xl font-bold mb-1 gradient-text">{bn ? "অ্যাডমিন লগইন" : "Admin Login"}</h1>
+        <h1 className="text-2xl font-bold mb-1 gradient-text">
+          {mode === "login" ? (bn ? "লগইন" : "Login") : (bn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account")}
+        </h1>
         <p className="text-sm text-muted-foreground mb-6">
           {mode === "login"
-            ? bn ? "অ্যাকাউন্টে সাইন ইন করুন" : "Sign in to your account"
-            : bn ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "Create a new account"}
+            ? bn ? "আপনার অ্যাকাউন্টে সাইন ইন করুন" : "Sign in to your account"
+            : bn ? "নতুন কাস্টমার অ্যাকাউন্ট তৈরি করুন" : "Create a new customer account"}
         </p>
         <form onSubmit={submit} className="space-y-4">
           <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>

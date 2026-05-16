@@ -31,11 +31,22 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (messages.length === 0) setMessages([{ role: "assistant", content: welcome }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [welcome]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  // Lock body scroll on mobile when open
+  useEffect(() => {
+    if (!open) return;
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    if (!isMobile) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -92,8 +103,9 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-gradient-primary text-primary-foreground shadow-glow flex items-center justify-center hover:scale-110 transition-smooth animate-glow-pulse group"
+          className="fixed bottom-24 sm:bottom-24 right-4 sm:right-6 z-50 h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-gradient-primary text-primary-foreground shadow-glow flex items-center justify-center hover:scale-110 active:scale-95 transition-smooth animate-glow-pulse group"
           aria-label="Open chat"
+          style={{ marginBottom: "env(safe-area-inset-bottom)" }}
         >
           <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-background animate-pulse" />
@@ -104,8 +116,13 @@ export function ChatWidget() {
       )}
 
       {open && (
-        <div className="fixed bottom-20 sm:bottom-24 right-3 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-[26rem] max-w-md h-[75vh] sm:h-[34rem] rounded-2xl glass shadow-elegant border border-border/60 flex flex-col overflow-hidden animate-fade-up">
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-primary text-primary-foreground">
+        <div
+          className="fixed z-50 flex flex-col overflow-hidden bg-card border-border/60 shadow-elegant animate-fade-up
+                     inset-0 sm:inset-auto sm:bottom-24 sm:right-6 sm:w-[26rem] sm:max-w-md sm:h-[34rem] sm:rounded-2xl sm:border"
+          style={{ height: "100dvh" }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 bg-gradient-primary text-primary-foreground shrink-0"
+               style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}>
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
               <div>
@@ -113,13 +130,15 @@ export function ChatWidget() {
                 <div className="text-[10px] opacity-90">{lang === "bn" ? "২৪/৭ সক্রিয়" : "Online 24/7"}</div>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Close"><X className="h-5 w-5" /></button>
+            <button onClick={() => setOpen(false)} aria-label="Close" className="h-9 w-9 -mr-2 flex items-center justify-center rounded-lg hover:bg-white/10">
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-background/50">
+          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2 bg-background/60">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap ${
+                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${
                   m.role === "user"
                     ? "bg-primary text-primary-foreground rounded-br-sm"
                     : m.role === "system"
@@ -140,7 +159,8 @@ export function ChatWidget() {
           </div>
 
           {showEscalate ? (
-            <div className="p-3 border-t border-border/50 space-y-2 bg-card">
+            <div className="p-3 border-t border-border/50 space-y-2 bg-card shrink-0"
+                 style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
               <div className="text-xs text-muted-foreground">{lang === "bn" ? "অ্যাডমিন আপনাকে শীঘ্রই যোগাযোগ করবে।" : "Admin will reach out shortly."}</div>
               <Input placeholder={lang === "bn" ? "আপনার নাম" : "Your name"} value={name} onChange={(e) => setName(e.target.value)} />
               <Input placeholder={lang === "bn" ? "ফোন/ইমেইল" : "Phone/Email"} value={contact} onChange={(e) => setContact(e.target.value)} />
@@ -152,20 +172,22 @@ export function ChatWidget() {
               </div>
             </div>
           ) : (
-            <div className="p-2 border-t border-border/50 bg-card">
-              <div className="flex gap-1.5">
-                <Button variant="ghost" size="icon" onClick={() => setShowEscalate(true)} title={lang === "bn" ? "অ্যাডমিনের সাথে কথা বলুন" : "Talk to admin"}>
-                  <UserCog className="h-4 w-4" />
+            <div className="p-2 border-t border-border/50 bg-card shrink-0"
+                 style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+              <div className="flex gap-1.5 items-center">
+                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setShowEscalate(true)} title={lang === "bn" ? "অ্যাডমিনের সাথে কথা বলুন" : "Talk to admin"}>
+                  <UserCog className="h-5 w-5" />
                 </Button>
                 <Input
+                  className="h-11 text-base"
                   placeholder={lang === "bn" ? "মেসেজ লিখুন..." : "Type a message..."}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && send(input)}
                   disabled={loading}
                 />
-                <Button size="icon" onClick={() => send(input)} disabled={loading || !input.trim()}>
-                  <Send className="h-4 w-4" />
+                <Button size="icon" className="h-11 w-11 shrink-0" onClick={() => send(input)} disabled={loading || !input.trim()}>
+                  <Send className="h-5 w-5" />
                 </Button>
               </div>
             </div>
