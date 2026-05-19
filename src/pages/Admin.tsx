@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -53,13 +53,29 @@ export default function Admin() {
     );
   }
 
+  const tabs = [
+    { value: "services", label: "Services", icon: Wrench },
+    { value: "categories", label: "Categories", icon: FolderTree },
+    { value: "products", label: "Products", icon: Package },
+    { value: "testimonials", label: "Reviews", icon: MessageSquare },
+    { value: "orders", label: "Orders", icon: ShoppingBag },
+    { value: "contacts", label: "Messages", icon: Mail },
+    { value: "chatbot", label: "Chatbot", icon: Bot },
+    { value: "settings", label: "Settings", icon: Settings },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card sticky top-0 z-40">
-        <div className="container flex items-center justify-between h-14 px-4">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <span className="font-bold gradient-text">Admin Panel</span>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <header className="border-b border-border/60 bg-card/80 backdrop-blur-xl sticky top-0 z-40">
+        <div className="container flex items-center justify-between h-16 px-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
+              <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div className="leading-tight">
+              <div className="font-bold gradient-text text-base">Admin Panel</div>
+              <div className="text-[11px] text-muted-foreground hidden sm:block">{user.email}</div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -70,16 +86,27 @@ export default function Admin() {
       </header>
 
       <main className="container px-4 py-6">
+        <div className="mb-6 p-5 sm:p-6 rounded-2xl bg-gradient-primary text-primary-foreground shadow-elegant relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white,transparent_50%)]" />
+          <div className="relative">
+            <div className="text-xs uppercase tracking-wider opacity-80">Welcome back</div>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Dashboard Overview</h1>
+            <p className="text-sm opacity-90 mt-1">Manage your store, services and customer engagement from one place.</p>
+          </div>
+        </div>
+
         <Tabs defaultValue="services">
-          <TabsList className="flex flex-wrap h-auto">
-            <TabsTrigger value="services">Services</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="contacts">Messages</TabsTrigger>
-            <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className="flex flex-wrap h-auto gap-1 bg-card/60 border border-border/60 p-1.5 rounded-xl backdrop-blur-sm">
+            {tabs.map((t) => (
+              <TabsTrigger
+                key={t.value}
+                value={t.value}
+                className="gap-1.5 rounded-lg data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-soft"
+              >
+                <t.icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.label}</span>
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="services" className="mt-4"><ServicesAdmin /></TabsContent>
@@ -95,6 +122,7 @@ export default function Admin() {
     </div>
   );
 }
+
 
 /* ---------- Services ---------- */
 function ServicesAdmin() {

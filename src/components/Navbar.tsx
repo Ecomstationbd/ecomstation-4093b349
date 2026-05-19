@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X, ShoppingCart, ShieldCheck, LayoutDashboard, LogIn } from "lucide-react";
+import { Menu, X, ShoppingCart, ShieldCheck, LayoutDashboard, UserCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
@@ -72,7 +72,7 @@ export function Navbar() {
           )}
           {!user && (
             <Button variant="ghost" size="icon" asChild aria-label="Login">
-              <Link to="/auth"><LogIn className="h-5 w-5" /></Link>
+              <Link to="/auth"><UserCircle2 className="h-5 w-5 text-primary" /></Link>
             </Button>
           )}
           <Button variant="hero" size="sm" className="hidden sm:inline-flex" asChild>
