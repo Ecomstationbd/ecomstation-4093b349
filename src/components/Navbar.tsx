@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X, ShoppingCart, ShieldCheck, LayoutDashboard, LogIn } from "lucide-react";
+import { Menu, X, ShoppingCart, ShieldCheck, LayoutDashboard, UserCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
