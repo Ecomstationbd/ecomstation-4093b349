@@ -118,7 +118,7 @@ export function ChatWidget() {
       {open && (
         <div
           className="fixed z-50 flex flex-col overflow-hidden bg-card border border-border/60 shadow-elegant animate-fade-up rounded-2xl
-                     bottom-24 right-3 left-3 max-h-[75dvh] h-[32rem]
+                     bottom-6 right-3 left-3 max-h-[75dvh] h-[32rem]
                      sm:left-auto sm:bottom-24 sm:right-6 sm:w-[26rem] sm:max-w-md sm:h-[34rem]"
         >
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-primary text-primary-foreground shrink-0 rounded-t-2xl">
