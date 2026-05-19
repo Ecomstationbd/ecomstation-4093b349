@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
