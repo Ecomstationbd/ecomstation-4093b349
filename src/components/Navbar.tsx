@@ -72,7 +72,7 @@ export function Navbar() {
           )}
           {!user && (
             <Button variant="ghost" size="icon" asChild aria-label="Login">
-              <Link to="/auth"><LogIn className="h-5 w-5" /></Link>
+              <Link to="/auth"><UserCircle2 className="h-5 w-5 text-primary" /></Link>
             </Button>
           )}
           <Button variant="hero" size="sm" className="hidden sm:inline-flex" asChild>
