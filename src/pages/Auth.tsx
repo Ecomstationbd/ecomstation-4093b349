@@ -31,7 +31,9 @@ export default function Auth() {
     if (!loading && user) nav(redirectFor(isAdmin), { replace: true });
   }, [user, loading, isAdmin, nav]);
 
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gradient-hero" />;
   if (user) return <Navigate to={redirectFor(isAdmin)} replace />;
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
