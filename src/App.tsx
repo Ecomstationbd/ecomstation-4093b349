@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/i18n/LanguageProvider";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import { CartDrawer } from "@/components/CartDrawer";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -41,6 +42,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <CartDrawer />
+                <MobileBottomNav />
               </BrowserRouter>
             </TooltipProvider>
           </CartProvider>
