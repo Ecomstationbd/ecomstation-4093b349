@@ -50,7 +50,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="relative" onClick={() => setCartOpen(true)} aria-label="Cart">
+          <Button variant="ghost" size="icon" className="relative hidden md:inline-flex" onClick={() => setCartOpen(true)} aria-label="Cart">
             <ShoppingCart className="h-5 w-5" />
             {count > 0 && (
               <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-gradient-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
@@ -61,17 +61,17 @@ export function Navbar() {
           <LanguageToggle />
           <ThemeToggle />
           {isAdmin && (
-            <Button variant="ghost" size="icon" asChild aria-label="Admin">
+            <Button variant="ghost" size="icon" asChild aria-label="Admin" className="hidden md:inline-flex">
               <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
             </Button>
           )}
           {user && !isAdmin && (
-            <Button variant="ghost" size="icon" asChild aria-label="Dashboard">
+            <Button variant="ghost" size="icon" asChild aria-label="Dashboard" className="hidden md:inline-flex">
               <Link to="/dashboard"><LayoutDashboard className="h-5 w-5 text-primary" /></Link>
             </Button>
           )}
           {!user && (
-            <Button variant="ghost" size="icon" asChild aria-label="Login">
+            <Button variant="ghost" size="icon" asChild aria-label="Login" className="hidden md:inline-flex">
               <Link to="/auth"><UserCircle2 className="h-5 w-5 text-primary" /></Link>
             </Button>
           )}
