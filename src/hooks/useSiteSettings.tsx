@@ -29,6 +29,7 @@ const defaults: SiteSettings = {
   contact_phone: "+880 1700-000000",
   contact_email: "hello@ecomstation.com",
   contact_whatsapp: "8801700000000",
+  contact_address: "Dhaka, Bangladesh",
   chatbot_enabled: "true",
   chatbot_welcome_bn: "হ্যালো! Ecomstation-এ স্বাগতম। আমি আপনাকে কীভাবে সাহায্য করতে পারি?",
   chatbot_welcome_en: "Hello! Welcome to Ecomstation. How can I help you today?",
