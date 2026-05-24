@@ -188,14 +188,15 @@ export default function ThankYou() {
       doc.setFontSize(9);
       doc.text("BILL TO", 18, y + 6);
       doc.setTextColor(30, 30, 30);
-      doc.setFont("helvetica", "bold");
+      setF(order.customer_name, "bold");
       doc.setFontSize(11);
       doc.text(order.customer_name, 18, y + 13);
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
+      setF("", "normal");
       doc.text(order.customer_phone, 18, y + 19);
       if (order.customer_email) doc.text(order.customer_email, 18, y + 24);
       if (order.customer_address) {
+        setF(order.customer_address);
         const lines = doc.splitTextToSize(order.customer_address, half - 8);
         doc.text(lines.slice(0, 1), 18, y + 29);
       }
