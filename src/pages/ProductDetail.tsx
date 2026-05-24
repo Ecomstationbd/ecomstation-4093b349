@@ -53,10 +53,11 @@ export default function ProductDetail() {
 
   const name = lang === "bn" ? product.name_bn : product.name_en;
   const desc = lang === "bn" ? product.description_bn : product.description_en;
-  const price = Number(product.price) + Number(variant?.price_delta || 0);
+  const price = variant?.price != null ? Number(variant.price) : Number(product.price) + Number(variant?.price_delta || 0);
   const Icon = product.category === "physical" ? Package2 : FileCode2;
   const gallery: string[] = Array.isArray(product.gallery) ? product.gallery : [];
-  const images = [product.image_url, ...gallery].filter(Boolean);
+  const baseImages = [product.image_url, ...gallery].filter(Boolean);
+  const images = variant?.image_url ? [variant.image_url, ...baseImages.filter((i) => i !== variant.image_url)] : baseImages;
 
   const addToCart = () => {
     const itemName = variant ? `${name} — ${lang === "bn" ? variant.name_bn : variant.name_en}` : name;
