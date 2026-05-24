@@ -26,6 +26,7 @@ const DELIVERY = { inside: 80, outside: 130 } as const;
 type Location = "inside" | "outside";
 
 export function CartDrawer() {
+  const navigate = useNavigate();
   const { items, open, setOpen, setQty, remove, total: subtotal, clear, hasPhysical } = useCart();
   const { user } = useAuth();
   const { lang } = useLanguage();
@@ -79,6 +80,7 @@ export function CartDrawer() {
     setForm({ customer_name: "", customer_phone: "", customer_email: "", customer_address: "", notes: "" });
     setOpen(false);
     setSubmitting(false);
+    navigate(`/thank-you?order_id=${orderId}`);
   };
 
   return (
