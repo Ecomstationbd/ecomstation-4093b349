@@ -17,6 +17,7 @@ type Product = {
   category: "physical" | "digital";
   badge: string | null;
   image_url: string | null;
+  is_physical?: boolean;
 };
 
 export function Shop() {
@@ -88,7 +89,7 @@ export function Shop() {
                     {p.old_price && <span className="text-sm text-muted-foreground line-through">৳{Number(p.old_price).toLocaleString()}</span>}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="hero" size="sm" className="flex-1" onClick={() => { add({ id: p.id, name, price: Number(p.price) }); toast.success(t("shop_added")); }}>
+                    <Button variant="hero" size="sm" className="flex-1" onClick={() => { add({ id: p.id, name, price: Number(p.price), is_physical: p.is_physical !== false }); toast.success(t("shop_added")); }}>
                       <ShoppingCart className="mr-1 h-4 w-4" /> {t("shop_add")}
                     </Button>
                     <Button variant="outline" size="sm" asChild>

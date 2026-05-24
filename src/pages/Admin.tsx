@@ -236,7 +236,7 @@ function ProductsAdmin() {
       const { data } = await supabase.from("product_variants").select("*").eq("product_id", p.id).order("sort_order");
       setVariants(data || []);
     } else {
-      setEditing({ slug: "", name_bn: "", name_en: "", description_bn: "", description_en: "", price: 0, old_price: null, category: "physical", category_id: null, badge: "", image_url: "", gallery: [], stock: null, is_active: true, sort_order: items.length + 1 });
+      setEditing({ slug: "", name_bn: "", name_en: "", description_bn: "", description_en: "", price: 0, old_price: null, category: "physical", category_id: null, badge: "", image_url: "", gallery: [], stock: null, is_active: true, is_physical: true, sort_order: items.length + 1 });
       setVariants([]);
     }
     setOpen(true);
@@ -373,9 +373,10 @@ function ProductsAdmin() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <div><Label>Sort</Label><Input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: parseInt(e.target.value) || 0 })} /></div>
                 <label className="flex items-center gap-2 mt-6"><Switch checked={editing.is_active} onCheckedChange={(c) => setEditing({ ...editing, is_active: c })} /> Active</label>
+                <label className="flex items-center gap-2 mt-6" title="Charge delivery for this product"><Switch checked={editing.is_physical !== false} onCheckedChange={(c) => setEditing({ ...editing, is_physical: c })} /> Physical</label>
               </div>
               <Button variant="hero" className="w-full" onClick={save}>Save</Button>
             </div>
@@ -587,6 +588,9 @@ function OrdersAdmin() {
             {(items[o.id] || []).map((i) => (
               <div key={i.id} className="flex justify-between"><span>{i.product_name} × {i.quantity}</span><span>৳{i.price * i.quantity}</span></div>
             ))}
+            {Number(o.delivery_charge) > 0 && (
+              <div className="flex justify-between text-muted-foreground"><span>Delivery ({o.delivery_location === "inside" ? "Inside Dhaka" : "Outside Dhaka"})</span><span>৳{Number(o.delivery_charge)}</span></div>
+            )}
             <div className="flex justify-between font-bold pt-1 border-t border-border mt-1"><span>Total</span><span className="gradient-text">৳{Number(o.total).toLocaleString()}</span></div>
           </div>
         </div>

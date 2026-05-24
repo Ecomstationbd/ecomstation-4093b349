@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Trash2, Minus, Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useLanguage } from "@/i18n/LanguageProvider";
@@ -20,19 +21,30 @@ const orderSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
+const DELIVERY = { inside: 80, outside: 130 } as const;
+type Location = "inside" | "outside";
+
 export function CartDrawer() {
-  const { items, open, setOpen, setQty, remove, total, clear } = useCart();
+  const { items, open, setOpen, setQty, remove, total: subtotal, clear, hasPhysical } = useCart();
   const { user } = useAuth();
   const { lang } = useLanguage();
   const bn = lang === "bn";
   const [form, setForm] = useState({ customer_name: "", customer_phone: "", customer_email: "", customer_address: "", notes: "" });
+  const [location, setLocation] = useState<Location>("inside");
   const [submitting, setSubmitting] = useState(false);
+
+  const deliveryCharge = hasPhysical ? DELIVERY[location] : 0;
+  const grandTotal = subtotal + deliveryCharge;
 
   const submit = async () => {
     if (items.length === 0) { toast.error(bn ? "কার্ট খালি" : "Cart is empty"); return; }
     const parsed = orderSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(bn ? "সঠিক তথ্য দিন" : "Please fill valid details");
+      return;
+    }
+    if (hasPhysical && !form.customer_address.trim()) {
+      toast.error(bn ? "ডেলিভারির জন্য ঠিকানা দিন" : "Address required for delivery");
       return;
     }
     setSubmitting(true);
@@ -42,7 +54,9 @@ export function CartDrawer() {
       customer_email: parsed.data.customer_email || null,
       customer_address: parsed.data.customer_address || null,
       notes: parsed.data.notes || null,
-      total,
+      total: grandTotal,
+      delivery_charge: deliveryCharge,
+      delivery_location: hasPhysical ? location : null,
       user_id: user?.id ?? null,
     }).select().single();
     if (error || !order) { toast.error(error?.message || "Error"); setSubmitting(false); return; }
@@ -90,9 +104,37 @@ export function CartDrawer() {
 
         {items.length > 0 && (
           <>
-            <div className="flex justify-between font-bold text-lg border-t border-border pt-3">
-              <span>{bn ? "মোট" : "Total"}</span>
-              <span className="gradient-text">৳{total.toLocaleString()}</span>
+            {hasPhysical && (
+              <div className="border-t border-border pt-3 space-y-2">
+                <Label>{bn ? "ডেলিভারি লোকেশন" : "Delivery Location"}</Label>
+                <RadioGroup value={location} onValueChange={(v) => setLocation(v as Location)} className="grid grid-cols-2 gap-2">
+                  <label className={`flex items-center gap-2 border rounded-lg p-3 cursor-pointer ${location === "inside" ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <RadioGroupItem value="inside" />
+                    <div className="text-sm">
+                      <div className="font-medium">{bn ? "ঢাকার ভিতরে" : "Inside Dhaka"}</div>
+                      <div className="text-xs text-muted-foreground">৳{DELIVERY.inside}</div>
+                    </div>
+                  </label>
+                  <label className={`flex items-center gap-2 border rounded-lg p-3 cursor-pointer ${location === "outside" ? "border-primary bg-primary/5" : "border-border"}`}>
+                    <RadioGroupItem value="outside" />
+                    <div className="text-sm">
+                      <div className="font-medium">{bn ? "ঢাকার বাইরে" : "Outside Dhaka"}</div>
+                      <div className="text-xs text-muted-foreground">৳{DELIVERY.outside}</div>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+            )}
+
+            <div className="border-t border-border pt-3 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">{bn ? "সাবটোটাল" : "Subtotal"}</span><span>৳{subtotal.toLocaleString()}</span></div>
+              {hasPhysical && (
+                <div className="flex justify-between"><span className="text-muted-foreground">{bn ? "ডেলিভারি চার্জ" : "Delivery"}</span><span>৳{deliveryCharge}</span></div>
+              )}
+              <div className="flex justify-between font-bold text-lg pt-1">
+                <span>{bn ? "মোট" : "Total"}</span>
+                <span className="gradient-text">৳{grandTotal.toLocaleString()}</span>
+              </div>
             </div>
             <div className="space-y-3 pt-4">
               <div>
@@ -108,7 +150,7 @@ export function CartDrawer() {
                 <Input type="email" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} maxLength={255} />
               </div>
               <div>
-                <Label>{bn ? "ঠিকানা" : "Address"}</Label>
+                <Label>{bn ? "ঠিকানা" : "Address"}{hasPhysical && " *"}</Label>
                 <Textarea value={form.customer_address} onChange={(e) => setForm({ ...form, customer_address: e.target.value })} maxLength={1000} />
               </div>
               <div>
