@@ -50,15 +50,16 @@ export default function Admin() {
   useEffect(() => {
     if (!isAdmin) return;
     const fetchIncomplete = async () => {
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count } = await supabase.from("orders").select("id", { count: "exact", head: true })
-        .eq("status", "pending").lt("created_at", cutoff);
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await supabase.from("abandoned_checkouts").select("id", { count: "exact", head: true })
+        .eq("completed", false).gte("created_at", since);
       setIncompleteCount(count || 0);
     };
     fetchIncomplete();
     const t = setInterval(fetchIncomplete, 60000);
     return () => clearInterval(t);
   }, [isAdmin]);
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
   if (!user) return <Navigate to="/auth" replace />;
