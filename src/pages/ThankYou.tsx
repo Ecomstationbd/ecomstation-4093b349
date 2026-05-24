@@ -53,6 +53,43 @@ async function loadImageAsDataURL(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
+// Bengali detection + font registration (Noto Sans Bengali via Google Fonts)
+const BN_RE = /[\u0980-\u09FF]/;
+const hasBengali = (s: string) => !!s && BN_RE.test(s);
+let bengaliFontB64: string | null | undefined;
+async function ensureBengaliFont(doc: jsPDF): Promise<boolean> {
+  if (bengaliFontB64 === null) return false;
+  if (bengaliFontB64 === undefined) {
+    try {
+      // Direct TTF from jsdelivr (Noto Sans Bengali Regular)
+      const url = "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-bengali@5.0.13/files/noto-sans-bengali-bengali-400-normal.woff";
+      // jsPDF needs TTF, so use a TTF mirror instead:
+      const ttfUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf";
+      const res = await fetch(ttfUrl);
+      if (!res.ok) throw new Error("font fetch failed");
+      const buf = new Uint8Array(await res.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+      bengaliFontB64 = btoa(bin);
+    } catch {
+      bengaliFontB64 = null;
+      return false;
+    }
+  }
+  try {
+    (doc as any).addFileToVFS("NotoSansBengali.ttf", bengaliFontB64);
+    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "normal");
+    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "bold");
+    return true;
+  } catch { return false; }
+}
+function pickFont(doc: jsPDF, text: string, style: "normal" | "bold" = "normal") {
+  if (hasBengali(text)) {
+    try { doc.setFont("NotoBengali", style); return; } catch { /* fall through */ }
+  }
+  doc.setFont("helvetica", style);
+}
+
 export default function ThankYou() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
