@@ -997,6 +997,7 @@ function OrdersAdmin() {
                     {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <Button size="icon" variant="outline" onClick={() => printInvoice(o)} title="Print invoice"><Printer className="h-4 w-4" /></Button>
                 <Button size="icon" variant="ghost" className="text-destructive" onClick={() => del(o.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
