@@ -10,7 +10,34 @@ import { Trash2, Minus, Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { z } from "zod";
+
+// Per-visitor session token so only the visitor who started the abandoned
+// checkout row can update it (enforced by RLS via x-checkout-session header).
+const CHECKOUT_SESSION_KEY = "checkout_session_token";
+function getCheckoutSessionToken(): string {
+  try {
+    let t = localStorage.getItem(CHECKOUT_SESSION_KEY);
+    if (!t || t.length < 16) {
+      t = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
+      localStorage.setItem(CHECKOUT_SESSION_KEY, t);
+    }
+    return t;
+  } catch {
+    return crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
+  }
+}
+function getAbandonedClient(token: string) {
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    { global: { headers: { "x-checkout-session": token } }, auth: { persistSession: false } }
+  );
+}
+
 import { toast } from "sonner";
 import { z } from "zod";
 
