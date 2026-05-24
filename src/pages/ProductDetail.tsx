@@ -61,7 +61,7 @@ export default function ProductDetail() {
   const addToCart = () => {
     const itemName = variant ? `${name} — ${lang === "bn" ? variant.name_bn : variant.name_en}` : name;
     const itemId = variant ? `${product.id}::${variant.id}` : product.id;
-    for (let i = 0; i < qty; i++) add({ id: itemId, name: itemName, price });
+    for (let i = 0; i < qty; i++) add({ id: itemId, name: itemName, price, is_physical: product.is_physical !== false });
     toast.success(t("shop_added"));
     setOpen(true);
   };
