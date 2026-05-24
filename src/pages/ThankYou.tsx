@@ -53,41 +53,73 @@ async function loadImageAsDataURL(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
-// Bengali detection + font registration (Noto Sans Bengali via Google Fonts)
+// Bengali detection
 const BN_RE = /[\u0980-\u09FF]/;
 const hasBengali = (s: string) => !!s && BN_RE.test(s);
-let bengaliFontB64: string | null | undefined;
-async function ensureBengaliFont(doc: jsPDF): Promise<boolean> {
-  if (bengaliFontB64 === null) return false;
-  if (bengaliFontB64 === undefined) {
+
+// Load Noto Sans Bengali as a real web font so the browser shapes conjuncts correctly.
+let bengaliFontLoaded: Promise<boolean> | null = null;
+function ensureBengaliWebFont(): Promise<boolean> {
+  if (bengaliFontLoaded) return bengaliFontLoaded;
+  bengaliFontLoaded = (async () => {
     try {
-      // Direct TTF from jsdelivr (Noto Sans Bengali Regular)
-      const url = "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-bengali@5.0.13/files/noto-sans-bengali-bengali-400-normal.woff";
-      // jsPDF needs TTF, so use a TTF mirror instead:
-      const ttfUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf";
-      const res = await fetch(ttfUrl);
-      if (!res.ok) throw new Error("font fetch failed");
-      const buf = new Uint8Array(await res.arrayBuffer());
-      let bin = "";
-      for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
-      bengaliFontB64 = btoa(bin);
-    } catch {
-      bengaliFontB64 = null;
-      return false;
-    }
-  }
-  try {
-    (doc as any).addFileToVFS("NotoSansBengali.ttf", bengaliFontB64);
-    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "normal");
-    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "bold");
-    return true;
-  } catch { return false; }
+      const base = "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-bengali@5.0.13/files";
+      const reg = new FontFace("NotoBengaliWeb", `url(${base}/noto-sans-bengali-bengali-400-normal.woff2) format("woff2")`, { weight: "400" });
+      const bold = new FontFace("NotoBengaliWeb", `url(${base}/noto-sans-bengali-bengali-700-normal.woff2) format("woff2")`, { weight: "700" });
+      await Promise.all([reg.load(), bold.load()]);
+      (document as any).fonts.add(reg);
+      (document as any).fonts.add(bold);
+      return true;
+    } catch { return false; }
+  })();
+  return bengaliFontLoaded;
 }
-function pickFont(doc: jsPDF, text: string, style: "normal" | "bold" = "normal") {
-  if (hasBengali(text)) {
-    try { doc.setFont("NotoBengali", style); return; } catch { /* fall through */ }
+
+// Render text into a PNG dataURL via canvas — the browser does proper Bengali script shaping.
+function renderTextImage(text: string, opts: { fontPt: number; bold?: boolean; color?: string }): { dataUrl: string; wMm: number; hMm: number } {
+  const scale = 4; // px per pt for crisp output
+  const fontPx = opts.fontPt * scale;
+  const weight = opts.bold ? 700 : 400;
+  const family = `"NotoBengaliWeb","Noto Sans Bengali","Hind Siliguri","Helvetica","Arial",sans-serif`;
+  const measure = document.createElement("canvas").getContext("2d")!;
+  measure.font = `${weight} ${fontPx}px ${family}`;
+  const w = Math.max(1, Math.ceil(measure.measureText(text).width)) + 6;
+  const h = Math.ceil(fontPx * 1.4);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.font = `${weight} ${fontPx}px ${family}`;
+  ctx.fillStyle = opts.color || "#000000";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(text, 2, fontPx);
+  const ptToMm = 0.3528;
+  return { dataUrl: canvas.toDataURL("image/png"), wMm: (w / scale) * ptToMm, hMm: (h / scale) * ptToMm };
+}
+
+// Unified text drawer — native for ASCII, image for Bengali.
+function drawText(
+  doc: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  opts: { sizePt: number; bold?: boolean; color?: [number, number, number]; align?: "left" | "right" | "center"; maxWidthMm?: number }
+) {
+  if (!text) return;
+  const [r, g, b] = opts.color || [0, 0, 0];
+  if (!hasBengali(text)) {
+    doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+    doc.setFontSize(opts.sizePt);
+    doc.setTextColor(r, g, b);
+    doc.text(text, x, y, { align: opts.align || "left" });
+    return;
   }
-  doc.setFont("helvetica", style);
+  const img = renderTextImage(text, { fontPt: opts.sizePt, bold: opts.bold, color: `rgb(${r},${g},${b})` });
+  let w = img.wMm, h = img.hMm;
+  if (opts.maxWidthMm && w > opts.maxWidthMm) { const k = opts.maxWidthMm / w; w *= k; h *= k; }
+  let drawX = x;
+  if (opts.align === "right") drawX = x - w;
+  else if (opts.align === "center") drawX = x - w / 2;
+  doc.addImage(img.dataUrl, "PNG", drawX, y - h * 0.82, w, h);
 }
 
 export default function ThankYou() {
@@ -123,95 +155,70 @@ export default function ThankYou() {
       const H = doc.internal.pageSize.getHeight();
       const [pr, pg, pb] = primaryRgb();
       const brand = settings.brand_name || "ECOMSTATION";
-
-      // Register Bengali font for any non-ASCII text in the invoice
       const bnFooter = bn ? "ধন্যবাদ আপনার অর্ডারের জন্য!" : "Thank you for your order!";
-      const needsBengali = [
-        brand, settings.contact_address, order.customer_name, order.customer_address,
-        order.notes || "", bnFooter, ...items.map(i => i.product_name),
-      ].some(t => hasBengali(t || ""));
-      const bnReady = needsBengali ? await ensureBengaliFont(doc) : false;
-      const setF = (text: string, style: "normal" | "bold" = "normal") => {
-        if (bnReady && hasBengali(text)) doc.setFont("NotoBengali", style);
-        else doc.setFont("helvetica", style);
-      };
 
-      // ====== HEADER BAND ======
-      doc.setFillColor(pr, pg, pb);
-      doc.rect(0, 0, W, 42, "F");
-      // soft accent stripe
-      doc.setFillColor(pr, pg, pb);
-      doc.setGState(new (doc as any).GState({ opacity: 0.35 }));
-      doc.rect(0, 42, W, 4, "F");
+      // Preload Bengali web font so canvas shaping is ready before rendering.
+      await ensureBengaliWebFont();
+
+      // ====== GRADIENT HEADER BAND ======
+      const headerH = 44;
+      // Vertical gradient: primary at top -> ~25% lighter at bottom.
+      const lighten = (c: number) => Math.min(255, Math.round(c + (255 - c) * 0.28));
+      const [pr2, pg2, pb2] = [lighten(pr), lighten(pg), lighten(pb)];
+      const strips = 60;
+      for (let i = 0; i < strips; i++) {
+        const t = i / (strips - 1);
+        const r = Math.round(pr + (pr2 - pr) * t);
+        const g = Math.round(pg + (pg2 - pg) * t);
+        const b = Math.round(pb + (pb2 - pb) * t);
+        doc.setFillColor(r, g, b);
+        doc.rect(0, (headerH / strips) * i, W, headerH / strips + 0.3, "F");
+      }
+      // subtle bottom highlight stripe
+      doc.setGState(new (doc as any).GState({ opacity: 0.25 }));
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, headerH, W, 1.5, "F");
       doc.setGState(new (doc as any).GState({ opacity: 1 }));
 
-      // Logo
+      // ====== HEADER CONTENT — ALL LEFT-ALIGNED ======
+      let hx = 14;
       if (settings.logo_url) {
         const dataUrl = await loadImageAsDataURL(settings.logo_url);
         if (dataUrl) {
           try {
             const fmt = dataUrl.includes("image/png") ? "PNG" : dataUrl.includes("image/webp") ? "WEBP" : "JPEG";
-            doc.addImage(dataUrl, fmt, 14, 10, 22, 22, undefined, "FAST");
+            doc.addImage(dataUrl, fmt, 14, 11, 22, 22, undefined, "FAST");
+            hx = 40;
           } catch { /* ignore */ }
         }
       }
 
-      doc.setTextColor(255, 255, 255);
-      setF(brand, "bold");
-      doc.setFontSize(22);
-      doc.text(brand, 40, 19);
-      doc.setFontSize(9);
-      setF(settings.contact_address || "");
-      doc.text(settings.contact_address || "", 40, 26);
-      setF("", "normal");
-      doc.text(`${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, 40, 31);
+      drawText(doc, brand, hx, 21, { sizePt: 22, bold: true, color: [255, 255, 255] });
+      drawText(doc, settings.contact_address || "", hx, 28, { sizePt: 9, color: [255, 255, 255] });
+      drawText(doc, `${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, hx, 34, { sizePt: 9, color: [255, 255, 255] });
 
-      // INVOICE label
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(26);
-      doc.text("INVOICE", W - 14, 22, { align: "right" });
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`#${orderNo}`, W - 14, 30, { align: "right" });
-      doc.text(new Date(order.created_at).toLocaleString(), W - 14, 35, { align: "right" });
+      // INVOICE label (right side, stays as identifier)
+      drawText(doc, "INVOICE", W - 14, 22, { sizePt: 26, bold: true, color: [255, 255, 255], align: "right" });
+      drawText(doc, `#${orderNo}`, W - 14, 30, { sizePt: 10, color: [255, 255, 255], align: "right" });
+      drawText(doc, new Date(order.created_at).toLocaleString(), W - 14, 36, { sizePt: 9, color: [255, 255, 255], align: "right" });
 
       // ====== BILL TO / META CARDS ======
-      let y = 56;
-      const cardH = 32;
+      let y = 58;
+      const cardH = 34;
       const half = (W - 14 * 2 - 6) / 2;
 
-      // Bill To card
       doc.setFillColor(245, 247, 252);
       doc.roundedRect(14, y, half, cardH, 3, 3, "F");
-      doc.setTextColor(pr, pg, pb);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("BILL TO", 18, y + 6);
-      doc.setTextColor(30, 30, 30);
-      setF(order.customer_name, "bold");
-      doc.setFontSize(11);
-      doc.text(order.customer_name, 18, y + 13);
-      doc.setFontSize(9);
-      setF("", "normal");
-      doc.text(order.customer_phone, 18, y + 19);
-      if (order.customer_email) doc.text(order.customer_email, 18, y + 24);
-      if (order.customer_address) {
-        setF(order.customer_address);
-        const lines = doc.splitTextToSize(order.customer_address, half - 8);
-        doc.text(lines.slice(0, 1), 18, y + 29);
-      }
+      drawText(doc, "BILL TO", 18, y + 6, { sizePt: 9, bold: true, color: [pr, pg, pb] });
+      drawText(doc, order.customer_name, 18, y + 13, { sizePt: 11, bold: true, color: [30, 30, 30], maxWidthMm: half - 8 });
+      drawText(doc, order.customer_phone, 18, y + 19, { sizePt: 9, color: [30, 30, 30] });
+      if (order.customer_email) drawText(doc, order.customer_email, 18, y + 24, { sizePt: 9, color: [30, 30, 30] });
+      if (order.customer_address) drawText(doc, order.customer_address, 18, y + 30, { sizePt: 9, color: [30, 30, 30], maxWidthMm: half - 8 });
 
-      // Order Meta card
       const mx = 14 + half + 6;
       doc.setFillColor(245, 247, 252);
       doc.roundedRect(mx, y, half, cardH, 3, 3, "F");
-      doc.setTextColor(pr, pg, pb);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      doc.text("ORDER DETAILS", mx + 4, y + 6);
-      doc.setTextColor(30, 30, 30);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      drawText(doc, "ORDER DETAILS", mx + 4, y + 6, { sizePt: 9, bold: true, color: [pr, pg, pb] });
       const metaRows: [string, string][] = [
         ["Invoice No", `#${orderNo}`],
         ["Date", new Date(order.created_at).toLocaleDateString()],
@@ -219,15 +226,12 @@ export default function ThankYou() {
         ["Delivery", order.delivery_location ? (order.delivery_location === "inside" ? "Inside Dhaka" : "Outside Dhaka") : "—"],
       ];
       metaRows.forEach((r, i) => {
-        doc.setTextColor(110, 110, 120);
-        doc.text(r[0], mx + 4, y + 13 + i * 5);
-        doc.setTextColor(30, 30, 30);
-        doc.setFont("helvetica", "bold");
-        doc.text(r[1], mx + half - 4, y + 13 + i * 5, { align: "right" });
-        doc.setFont("helvetica", "normal");
+        drawText(doc, r[0], mx + 4, y + 13 + i * 5, { sizePt: 9, color: [110, 110, 120] });
+        drawText(doc, r[1], mx + half - 4, y + 13 + i * 5, { sizePt: 9, bold: true, color: [30, 30, 30], align: "right" });
       });
 
       // ====== ITEMS TABLE ======
+      // For Bengali product names, hide native text and draw image in didDrawCell.
       const rows = items.map((it, i) => [
         String(i + 1),
         it.product_name,
@@ -236,14 +240,13 @@ export default function ThankYou() {
         `BDT ${(Number(it.price) * it.quantity).toLocaleString()}`,
       ]);
 
-      const tableFont = bnReady && items.some(i => hasBengali(i.product_name)) ? "NotoBengali" : "helvetica";
       autoTable(doc, {
         startY: y + cardH + 8,
         head: [["#", "Item", "Qty", "Price", "Total"]],
         body: rows,
         theme: "grid",
-        headStyles: { fillColor: [pr, pg, pb], textColor: 255, fontStyle: "bold", halign: "left", font: tableFont },
-        bodyStyles: { textColor: [40, 40, 50], fontSize: 10, font: tableFont },
+        headStyles: { fillColor: [pr, pg, pb], textColor: 255, fontStyle: "bold", halign: "left" },
+        bodyStyles: { textColor: [40, 40, 50], fontSize: 10 },
         alternateRowStyles: { fillColor: [248, 250, 255] },
         columnStyles: {
           0: { cellWidth: 12, halign: "center" },
@@ -251,8 +254,26 @@ export default function ThankYou() {
           3: { cellWidth: 32, halign: "right" },
           4: { cellWidth: 34, halign: "right", fontStyle: "bold" },
         },
-        styles: { cellPadding: 3, lineColor: [230, 232, 240], font: tableFont },
+        styles: { cellPadding: 3, lineColor: [230, 232, 240] },
         margin: { left: 14, right: 14 },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === 1) {
+            const txt = String(data.cell.raw || "");
+            if (hasBengali(txt)) data.cell.text = [""];
+          }
+        },
+        didDrawCell: (data) => {
+          if (data.section === "body" && data.column.index === 1) {
+            const txt = items[data.row.index]?.product_name || "";
+            if (hasBengali(txt)) {
+              const img = renderTextImage(txt, { fontPt: 10, color: "rgb(40,40,50)" });
+              const maxW = data.cell.width - 4;
+              let w = img.wMm, h = img.hMm;
+              if (w > maxW) { const k = maxW / w; w *= k; h *= k; }
+              doc.addImage(img.dataUrl, "PNG", data.cell.x + 2, data.cell.y + (data.cell.height - h) / 2, w, h);
+            }
+          }
+        },
       });
 
       const finalY = (doc as any).lastAutoTable.finalY + 8;
@@ -263,50 +284,37 @@ export default function ThankYou() {
       doc.setFillColor(248, 250, 255);
       doc.roundedRect(totalsX, finalY, 80, 32, 3, 3, "F");
 
-      doc.setFontSize(10);
-      doc.setTextColor(90, 90, 100);
-      doc.setFont("helvetica", "normal");
-      doc.text("Subtotal", totalsX + 4, finalY + 8);
-      doc.text("Delivery", totalsX + 4, finalY + 15);
+      drawText(doc, "Subtotal", totalsX + 4, finalY + 8, { sizePt: 10, color: [90, 90, 100] });
+      drawText(doc, "Delivery", totalsX + 4, finalY + 15, { sizePt: 10, color: [90, 90, 100] });
+      drawText(doc, `BDT ${subtotal.toLocaleString()}`, totalsX + 76, finalY + 8, { sizePt: 10, color: [30, 30, 30], align: "right" });
+      drawText(doc, `BDT ${Number(order.delivery_charge || 0).toLocaleString()}`, totalsX + 76, finalY + 15, { sizePt: 10, color: [30, 30, 30], align: "right" });
 
-      doc.setTextColor(30, 30, 30);
-      doc.text(`BDT ${subtotal.toLocaleString()}`, totalsX + 76, finalY + 8, { align: "right" });
-      doc.text(`BDT ${Number(order.delivery_charge || 0).toLocaleString()}`, totalsX + 76, finalY + 15, { align: "right" });
-
-      // Total band
       doc.setFillColor(pr, pg, pb);
       doc.roundedRect(totalsX, finalY + 20, 80, 12, 2, 2, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("TOTAL", totalsX + 4, finalY + 28);
-      doc.text(`BDT ${Number(order.total).toLocaleString()}`, totalsX + 76, finalY + 28, { align: "right" });
+      drawText(doc, "TOTAL", totalsX + 4, finalY + 28, { sizePt: 12, bold: true, color: [255, 255, 255] });
+      drawText(doc, `BDT ${Number(order.total).toLocaleString()}`, totalsX + 76, finalY + 28, { sizePt: 12, bold: true, color: [255, 255, 255], align: "right" });
 
       // Notes
       if (order.notes) {
-        doc.setTextColor(90, 90, 100);
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.text("Notes", 14, finalY + 8);
-        setF(order.notes, "normal");
-        const lines = doc.splitTextToSize(order.notes, totalsX - 14 - 6);
-        doc.text(lines, 14, finalY + 14);
+        drawText(doc, "Notes", 14, finalY + 8, { sizePt: 9, bold: true, color: [90, 90, 100] });
+        // wrap manually if Bengali, else use jsPDF wrap
+        if (hasBengali(order.notes)) {
+          drawText(doc, order.notes, 14, finalY + 14, { sizePt: 9, color: [60, 60, 70], maxWidthMm: totalsX - 14 - 6 });
+        } else {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(60, 60, 70);
+          const lines = doc.splitTextToSize(order.notes, totalsX - 14 - 6);
+          doc.text(lines, 14, finalY + 14);
+        }
       }
 
-      // ====== FOOTER ======
+      // ====== FOOTER (only thank-you, no phone/email) ======
       doc.setFillColor(pr, pg, pb);
       doc.setGState(new (doc as any).GState({ opacity: 0.08 }));
-      doc.rect(0, H - 22, W, 22, "F");
+      doc.rect(0, H - 18, W, 18, "F");
       doc.setGState(new (doc as any).GState({ opacity: 1 }));
-
-      doc.setTextColor(pr, pg, pb);
-      setF(bnFooter, "bold");
-      doc.setFontSize(11);
-      doc.text(bnFooter, W / 2, H - 13, { align: "center" });
-      doc.setTextColor(110, 110, 120);
-      setF(brand, "normal");
-      doc.setFontSize(8);
-      doc.text(`${brand}  •  ${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, W / 2, H - 7, { align: "center" });
+      drawText(doc, bnFooter, W / 2, H - 7, { sizePt: 11, bold: true, color: [pr, pg, pb], align: "center" });
 
       doc.save(`Invoice-${orderNo}.pdf`);
     } catch (e: any) {
