@@ -1,15 +1,68 @@
 import { ArrowRight, Sparkles, PlayCircle } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/i18n/LanguageProvider";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { defaultHeroStats } from "@/hooks/useSiteSettings";
+
+const toBanglaDigits = (s: string) => s.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]);
+
+function CountUp({ value, bn, run }: { value: string; bn: boolean; run: boolean }) {
+  // Parse leading number; keep prefix/suffix
+  const match = value.match(/^([^\d]*)([\d]+(?:\.\d+)?)(.*)$/);
+  const [display, setDisplay] = useState(match ? "0" : value);
+
+  useEffect(() => {
+    if (!match || !run) return;
+    const target = parseFloat(match[2]);
+    const duration = 1400;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const v = target * eased;
+      const isInt = !match[2].includes(".");
+      setDisplay(isInt ? Math.round(v).toString() : v.toFixed(1));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [run, value]);
+
+  if (!match) return <>{bn ? toBanglaDigits(value) : value}</>;
+  const full = `${match[1]}${display}${match[3]}`;
+  return <>{bn ? toBanglaDigits(full) : full}</>;
+}
+
+type Stat = { value: string; label_bn: string; label_en: string };
 
 export function Hero() {
-  const { t } = useLanguage();
-  const stats = [
-    { v: t("hero_num_clients"), l: t("hero_stat_clients") },
-    { v: t("hero_num_pillars"), l: t("hero_stat_pillars") },
-    { v: t("hero_num_support"), l: t("hero_stat_support") },
-    { v: t("hero_num_satisfaction"), l: t("hero_stat_satisfaction") },
-  ];
+  const { t, lang } = useLanguage();
+  const settings = useSiteSettings();
+  const bn = lang === "bn";
+  const ref = useRef<HTMLDivElement>(null);
+  const [run, setRun] = useState(false);
+
+  const stats: Stat[] = useMemo(() => {
+    try {
+      const parsed = JSON.parse(settings.hero_stats);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    } catch {}
+    return defaultHeroStats;
+  }, [settings.hero_stats]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setRun(true)),
+      { threshold: 0.3 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
@@ -46,11 +99,18 @@ export function Hero() {
             </Button>
           </div>
 
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
-            {stats.map((s) => (
-              <div key={s.l} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold gradient-text">{s.v}</div>
-                <div className="text-sm text-muted-foreground mt-1">{s.l}</div>
+          <div
+            ref={ref}
+            className="mt-14 flex flex-row flex-nowrap items-center justify-between sm:justify-around gap-2 sm:gap-6 max-w-4xl mx-auto overflow-x-auto sm:overflow-visible px-1"
+          >
+            {stats.map((s, i) => (
+              <div key={i} className="flex-1 min-w-0 text-center">
+                <div className="text-xl sm:text-3xl md:text-4xl font-bold gradient-text tabular-nums whitespace-nowrap">
+                  <CountUp value={s.value} bn={bn} run={run} />
+                </div>
+                <div className="text-[11px] sm:text-sm text-muted-foreground mt-1 whitespace-nowrap truncate">
+                  {bn ? s.label_bn : s.label_en}
+                </div>
               </div>
             ))}
           </div>
