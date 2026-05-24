@@ -925,7 +925,7 @@ function OrdersAdmin() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-bold">Orders ({filtered.length}<span className="text-sm text-muted-foreground font-normal">/{orders.length}</span>)</h2>
-        <Button size="sm" variant="outline" onClick={exportCSV}>Export CSV</Button>
+        <Button size="sm" variant="outline" onClick={exportExcel}><FileSpreadsheet className="h-4 w-4 mr-1" />Export Excel</Button>
       </div>
 
       {/* Status pills */}
