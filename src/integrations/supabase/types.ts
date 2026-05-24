@@ -206,6 +206,8 @@ export type Database = {
           customer_email: string | null
           customer_name: string
           customer_phone: string
+          delivery_charge: number
+          delivery_location: string | null
           id: string
           notes: string | null
           status: string
@@ -219,6 +221,8 @@ export type Database = {
           customer_email?: string | null
           customer_name: string
           customer_phone: string
+          delivery_charge?: number
+          delivery_location?: string | null
           id?: string
           notes?: string | null
           status?: string
@@ -232,6 +236,8 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string
+          delivery_charge?: number
+          delivery_location?: string | null
           id?: string
           notes?: string | null
           status?: string
@@ -297,6 +303,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_physical: boolean
           name_bn: string
           name_en: string
           old_price: number | null
@@ -317,6 +324,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_physical?: boolean
           name_bn: string
           name_en: string
           old_price?: number | null
@@ -337,6 +345,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_physical?: boolean
           name_bn?: string
           name_en?: string
           old_price?: number | null
