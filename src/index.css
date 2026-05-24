@@ -171,6 +171,16 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
 }
+
+/* Bangla digits override — use Noto Sans Bengali only for ০-৯ so numbers are legible */
+@font-face {
+  font-family: 'BanglaDigits';
+  src: local('Noto Sans Bengali'), local('NotoSansBengali-Regular');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+09E6-09EF;
+}
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
