@@ -288,7 +288,7 @@ export default function ThankYou() {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.text("Notes", 14, finalY + 8);
-        doc.setFont("helvetica", "normal");
+        setF(order.notes, "normal");
         const lines = doc.splitTextToSize(order.notes, totalsX - 14 - 6);
         doc.text(lines, 14, finalY + 14);
       }
