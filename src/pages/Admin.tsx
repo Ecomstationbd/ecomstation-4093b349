@@ -830,22 +830,90 @@ function OrdersAdmin() {
     toast.success("Deleted"); load();
   };
 
-  const exportCSV = () => {
+  const exportExcel = () => {
     const rows = filtered.length ? filtered : orders;
-    const head = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Delivery", "Total", "Status", "Notes"];
-    const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const csv = [head.join(",")].concat(rows.map((o) => {
+    const data = rows.map((o) => {
       const its = (items[o.id] || []).map((i) => `${i.product_name} x${i.quantity}`).join(" | ");
-      return [o.id.slice(0, 8).toUpperCase(), new Date(o.created_at).toLocaleString(), o.customer_name, o.customer_phone,
-        o.customer_email || "", o.customer_address || "", its, o.delivery_charge || 0, o.total, o.status, o.notes || ""].map(esc).join(",");
-    })).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
-    toast.success("CSV exported");
+      return {
+        "Order No": o.id.slice(0, 8).toUpperCase(),
+        "Date": new Date(o.created_at).toLocaleString(),
+        "Customer": o.customer_name,
+        "Phone": o.customer_phone,
+        "Email": o.customer_email || "",
+        "Address": o.customer_address || "",
+        "Items": its,
+        "Delivery": Number(o.delivery_charge) || 0,
+        "Total": Number(o.total),
+        "Status": o.status,
+        "Notes": o.notes || "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = [{ wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 22 }, { wch: 28 }, { wch: 30 }, { wch: 9 }, { wch: 9 }, { wch: 11 }, { wch: 20 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    XLSX.writeFile(wb, `orders-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success("Excel exported");
   };
+
+  const printInvoice = (o: any) => {
+    const its = items[o.id] || [];
+    const orderNo = o.id.slice(0, 8).toUpperCase();
+    // Generate barcode SVG
+    const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    try {
+      JsBarcode(svgEl, orderNo, { format: "CODE128", width: 1.6, height: 40, displayValue: false, margin: 0 });
+    } catch {}
+    const barcodeSvg = new XMLSerializer().serializeToString(svgEl);
+    const brand = (window as any).__brandName || "Invoice";
+    const itemsHtml = its.map((i: any) => `<tr><td>${i.product_name}<br/><span class="muted">x${i.quantity} @ ৳${Number(i.price)}</span></td><td class="r">৳${Number(i.price) * Number(i.quantity)}</td></tr>`).join("");
+    const subtotal = its.reduce((s: number, i: any) => s + Number(i.price) * Number(i.quantity), 0);
+    const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Invoice ${orderNo}</title>
+<style>
+  @page { size: 3in 4in; margin: 0; }
+  * { box-sizing: border-box; }
+  body { width: 3in; margin: 0; padding: 6px 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #000; }
+  h1 { font-size: 13px; margin: 0; text-align: center; letter-spacing: 0.5px; }
+  .center { text-align: center; }
+  .muted { color: #555; font-size: 9px; }
+  hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  td { padding: 2px 0; vertical-align: top; }
+  .r { text-align: right; white-space: nowrap; }
+  .row { display: flex; justify-content: space-between; font-size: 10px; }
+  .total { font-weight: bold; font-size: 12px; }
+  .barcode svg { width: 100%; height: 40px; }
+  @media print { body { padding: 4px; } }
+</style></head><body>
+  <h1>${brand}</h1>
+  <div class="center muted">Invoice / Receipt</div>
+  <hr/>
+  <div class="row"><span>Order:</span><span><b>#${orderNo}</b></span></div>
+  <div class="row"><span>Date:</span><span>${new Date(o.created_at).toLocaleString()}</span></div>
+  <div class="row"><span>Status:</span><span>${o.status}</span></div>
+  <hr/>
+  <div><b>${o.customer_name}</b></div>
+  <div class="muted">${o.customer_phone}</div>
+  ${o.customer_address ? `<div class="muted">${o.customer_address}</div>` : ""}
+  <hr/>
+  <table>${itemsHtml}</table>
+  <hr/>
+  <div class="row"><span>Subtotal</span><span>৳${subtotal}</span></div>
+  ${Number(o.delivery_charge) > 0 ? `<div class="row"><span>Delivery</span><span>৳${Number(o.delivery_charge)}</span></div>` : ""}
+  <div class="row total"><span>TOTAL</span><span>৳${Number(o.total)}</span></div>
+  <hr/>
+  <div class="barcode center">${barcodeSvg}</div>
+  <div class="center muted">${orderNo}</div>
+  <hr/>
+  <div class="center muted">Thank you!</div>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);}</script>
+</body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600");
+    if (!w) return toast.error("Popup blocked");
+    w.document.write(html);
+    w.document.close();
+  };
+
 
   const statusCounts = useMemo(() => {
     const c: Record<string, number> = { all: orders.length };
