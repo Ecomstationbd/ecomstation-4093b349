@@ -74,6 +74,8 @@ export function CartDrawer() {
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
+      const token = getCheckoutSessionToken();
+      const client = getAbandonedClient(token);
       const payload = {
         customer_name: form.customer_name.trim() || null,
         customer_phone: form.customer_phone.trim() || null,
@@ -85,12 +87,13 @@ export function CartDrawer() {
         user_id: user?.id ?? null,
       };
       if (abandonedIdRef.current) {
-        await supabase.from("abandoned_checkouts").update(payload).eq("id", abandonedIdRef.current);
+        await client.from("abandoned_checkouts").update(payload).eq("id", abandonedIdRef.current);
       } else {
-        const { data } = await supabase.from("abandoned_checkouts").insert(payload).select("id").maybeSingle();
+        const { data } = await client.from("abandoned_checkouts").insert({ ...payload, session_token: token }).select("id").maybeSingle();
         if (data?.id) abandonedIdRef.current = data.id;
       }
     }, 1200);
+
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
