@@ -749,6 +749,7 @@ function TestimonialsAdmin() {
 
 /* ---------- Orders ---------- */
 function OrdersAdmin() {
+  const settings = useSiteSettings();
   const [orders, setOrders] = useState<Order[]>([]);
   const [items, setItems] = useState<Record<string, any[]>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
