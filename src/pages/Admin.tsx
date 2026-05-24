@@ -272,7 +272,9 @@ function ProductsAdmin() {
         product_id: productId,
         name_bn: v.name_bn || v.name_en,
         name_en: v.name_en || v.name_bn,
-        price_delta: Number(v.price_delta) || 0,
+        price: v.price === "" || v.price == null ? null : Number(v.price),
+        image_url: v.image_url || null,
+        price_delta: 0,
         stock: v.stock === "" || v.stock == null ? null : Number(v.stock),
         sort_order: i,
         is_active: v.is_active !== false,
@@ -355,7 +357,7 @@ function ProductsAdmin() {
               <div className="border-t border-border pt-3">
                 <div className="flex items-center justify-between mb-2">
                   <Label>Variants</Label>
-                  <Button size="sm" variant="outline" type="button" onClick={() => setVariants([...variants, { name_bn: "", name_en: "", price_delta: 0, stock: null, is_active: true }])}>
+                  <Button size="sm" variant="outline" type="button" onClick={() => setVariants([...variants, { name_bn: "", name_en: "", price: "", image_url: "", stock: null, is_active: true }])}>
                     <Plus className="h-3 w-3 mr-1" />Add Variant
                   </Button>
                 </div>
@@ -364,9 +366,10 @@ function ProductsAdmin() {
                     <div key={idx} className="grid grid-cols-12 gap-1 items-end bg-secondary/30 p-2 rounded-lg">
                       <div className="col-span-3"><Input placeholder="Name BN" value={v.name_bn} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, name_bn: e.target.value }; setVariants(c); }} /></div>
                       <div className="col-span-3"><Input placeholder="Name EN" value={v.name_en} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, name_en: e.target.value }; setVariants(c); }} /></div>
-                      <div className="col-span-3"><Input type="number" placeholder="Price ±" value={v.price_delta} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, price_delta: e.target.value }; setVariants(c); }} /></div>
-                      <div className="col-span-2"><Input type="number" placeholder="Stock" value={v.stock ?? ""} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, stock: e.target.value }; setVariants(c); }} /></div>
+                      <div className="col-span-2"><Input type="number" placeholder="Price ৳" value={v.price ?? ""} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, price: e.target.value }; setVariants(c); }} /></div>
+                      <div className="col-span-3"><Input placeholder="Image URL" value={v.image_url ?? ""} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, image_url: e.target.value }; setVariants(c); }} /></div>
                       <div className="col-span-1"><Button size="icon" variant="ghost" type="button" onClick={() => setVariants(variants.filter((_, i) => i !== idx))}><Trash2 className="h-4 w-4 text-destructive" /></Button></div>
+                      <div className="col-span-3"><Input type="number" placeholder="Stock" value={v.stock ?? ""} onChange={(e) => { const c = [...variants]; c[idx] = { ...v, stock: e.target.value }; setVariants(c); }} /></div>
                     </div>
                   ))}
                   {variants.length === 0 && <div className="text-xs text-muted-foreground">No variants. Customers will buy the base product.</div>}

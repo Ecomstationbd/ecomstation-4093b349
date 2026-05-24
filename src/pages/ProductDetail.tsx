@@ -53,10 +53,11 @@ export default function ProductDetail() {
 
   const name = lang === "bn" ? product.name_bn : product.name_en;
   const desc = lang === "bn" ? product.description_bn : product.description_en;
-  const price = Number(product.price) + Number(variant?.price_delta || 0);
+  const price = variant?.price != null ? Number(variant.price) : Number(product.price) + Number(variant?.price_delta || 0);
   const Icon = product.category === "physical" ? Package2 : FileCode2;
   const gallery: string[] = Array.isArray(product.gallery) ? product.gallery : [];
-  const images = [product.image_url, ...gallery].filter(Boolean);
+  const baseImages = [product.image_url, ...gallery].filter(Boolean);
+  const images = variant?.image_url ? [variant.image_url, ...baseImages.filter((i) => i !== variant.image_url)] : baseImages;
 
   const addToCart = () => {
     const itemName = variant ? `${name} — ${lang === "bn" ? variant.name_bn : variant.name_en}` : name;
@@ -107,11 +108,15 @@ export default function ProductDetail() {
                     {variants.map((v) => {
                       const vName = lang === "bn" ? v.name_bn : v.name_en;
                       const active = variant?.id === v.id;
+                      const vPrice = v.price != null ? Number(v.price) : Number(product.price) + Number(v.price_delta || 0);
                       return (
                         <button key={v.id} onClick={() => setVariant(active ? null : v)}
-                          className={`px-4 py-2 rounded-xl border text-sm font-medium transition-smooth ${active ? "border-primary bg-primary/10 text-foreground shadow-glow" : "border-border hover:border-primary/50"}`}>
-                          {active && <Check className="inline h-3 w-3 mr-1" />}{vName}
-                          {Number(v.price_delta) !== 0 && <span className="ml-1 text-xs text-muted-foreground">{Number(v.price_delta) > 0 ? "+" : ""}৳{Number(v.price_delta)}</span>}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-smooth ${active ? "border-primary bg-primary/10 text-foreground shadow-glow" : "border-border hover:border-primary/50"}`}>
+                          {v.image_url && <img src={v.image_url} alt={vName} className="h-8 w-8 rounded-md object-cover" />}
+                          <span className="flex flex-col items-start">
+                            <span>{active && <Check className="inline h-3 w-3 mr-1" />}{vName}</span>
+                            <span className="text-xs text-muted-foreground">৳{vPrice.toLocaleString()}</span>
+                          </span>
                         </button>
                       );
                     })}
