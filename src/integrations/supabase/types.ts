@@ -550,6 +550,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_insert_chat_message: {
+        Args: { _conversation_id: string }
+        Returns: boolean
+      }
       can_insert_order_item: { Args: { _order_id: string }; Returns: boolean }
       claim_first_admin: { Args: never; Returns: boolean }
       has_role: {
