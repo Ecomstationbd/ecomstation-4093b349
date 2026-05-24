@@ -100,7 +100,7 @@ export function Shop() {
                 </div>
               </div>
               <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5" asChild>
-                <Link to="/products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
+                <Link to="/physical-products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
               </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -126,7 +126,7 @@ export function Shop() {
                 </div>
               </div>
               <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5" asChild>
-                <Link to="/products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
+                <Link to="/physical-products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
               </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

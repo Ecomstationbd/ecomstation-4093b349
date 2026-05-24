@@ -81,7 +81,7 @@ export default function AllProducts() {
   }, []);
 
   const physical = products.filter((p) => p.category === "physical");
-  const digital = products.filter((p) => p.category === "digital");
+  const digital: Product[] = [];
 
   return (
     <div className="min-h-screen bg-background">
