@@ -47,7 +47,7 @@ function ProductCard({ p }: { p: Product }) {
       </Link>
       <div className="p-2.5 flex flex-col flex-1">
         <Link to={`/product/${p.slug}`}>
-          <h3 className="font-semibold mb-1 line-clamp-2 min-h-[2rem] text-xs hover:text-primary transition-smooth">{name}</h3>
+          <h3 className="font-semibold mb-1 line-clamp-2 min-h-[2rem] text-xs text-center hover:text-primary transition-smooth">{name}</h3>
         </Link>
         <div className="flex items-baseline justify-center gap-1.5 mb-2">
           <span className="text-base font-bold gradient-text">৳{Number(p.price).toLocaleString()}</span>
