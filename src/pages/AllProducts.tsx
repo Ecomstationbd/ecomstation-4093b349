@@ -119,7 +119,7 @@ export default function AllProducts() {
                       <p className="text-sm text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
                     </div>
                   </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {physical.map((p) => (
                       <ProductCard key={p.id} p={p} />
                     ))}
@@ -139,7 +139,7 @@ export default function AllProducts() {
                       <p className="text-sm text-muted-foreground">{lang === "bn" ? "ডিজিটাল অ্যাসেট, স্ক্রিপ্ট ও টেমপ্লেট" : "Digital assets, scripts & templates"}</p>
                     </div>
                   </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {digital.map((p) => (
                       <ProductCard key={p.id} p={p} />
                     ))}
