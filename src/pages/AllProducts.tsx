@@ -92,16 +92,6 @@ export default function AllProducts() {
             <ArrowLeft className="h-4 w-4" /> {lang === "bn" ? "হোমে ফিরুন" : "Back to home"}
           </Link>
 
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h1 className="text-3xl md:text-5xl font-bold mb-4">
-              <span className="gradient-text">{lang === "bn" ? "সব" : "All"}</span> {lang === "bn" ? "প্রোডাক্ট" : "Products"}
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              {lang === "bn"
-                ? "আপনার ই-কমার্স ব্যবসার জন্য প্রয়োজনীয় সব পণ্য এক জায়গায়।"
-                : "All the products you need for your e-commerce business in one place."}
-            </p>
-          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">Loading…</div>
