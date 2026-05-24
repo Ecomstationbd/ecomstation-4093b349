@@ -120,13 +120,13 @@ export default function AllProducts() {
               {/* Digital Products */}
               {digital.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <FileCode2 className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col items-center text-center gap-2 mb-8">
+                    <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <FileCode2 className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold">{t("shop_label_digital")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h2>
-                      <p className="text-sm text-muted-foreground">{lang === "bn" ? "ডিজিটাল অ্যাসেট, স্ক্রিপ্ট ও টেমপ্লেট" : "Digital assets, scripts & templates"}</p>
+                      <h2 className="text-lg font-bold">{t("shop_label_digital")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h2>
+                      <p className="text-xs text-muted-foreground">{lang === "bn" ? "ডিজিটাল অ্যাসেট, স্ক্রিপ্ট ও টেমপ্লেট" : "Digital assets, scripts & templates"}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
