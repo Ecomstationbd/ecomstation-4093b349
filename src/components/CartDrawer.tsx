@@ -48,7 +48,9 @@ export function CartDrawer() {
       return;
     }
     setSubmitting(true);
-    const { data: order, error } = await supabase.from("orders").insert({
+    const orderId = crypto.randomUUID();
+    const { error } = await supabase.from("orders").insert({
+      id: orderId,
       customer_name: parsed.data.customer_name,
       customer_phone: parsed.data.customer_phone,
       customer_email: parsed.data.customer_email || null,
@@ -58,11 +60,11 @@ export function CartDrawer() {
       delivery_charge: deliveryCharge,
       delivery_location: hasPhysical ? location : null,
       user_id: user?.id ?? null,
-    }).select().single();
-    if (error || !order) { toast.error(error?.message || "Error"); setSubmitting(false); return; }
+    });
+    if (error) { toast.error(error.message); setSubmitting(false); return; }
 
     const lineItems = items.map((i) => ({
-      order_id: order.id,
+      order_id: orderId,
       product_id: i.id,
       product_name: i.name,
       price: i.price,
