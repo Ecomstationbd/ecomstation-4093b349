@@ -12,7 +12,15 @@ export type SiteSettings = {
   chatbot_welcome_en: string;
   chatbot_system_prompt: string;
   chatbot_knowledge: string;
+  hero_stats: string;
 };
+
+export const defaultHeroStats = [
+  { value: "500+", label_bn: "সফল ক্লায়েন্ট", label_en: "Happy Clients" },
+  { value: "10+", label_bn: "সার্ভিস পিলার", label_en: "Service Pillars" },
+  { value: "24/7", label_bn: "সাপোর্ট", label_en: "Support" },
+  { value: "98%", label_bn: "সন্তুষ্টি", label_en: "Satisfaction" },
+];
 
 const defaults: SiteSettings = {
   logo_url: "",
@@ -25,6 +33,7 @@ const defaults: SiteSettings = {
   chatbot_welcome_en: "Hello! Welcome to Ecomstation. How can I help you today?",
   chatbot_system_prompt: "",
   chatbot_knowledge: "",
+  hero_stats: JSON.stringify(defaultHeroStats),
 };
 
 export function useSiteSettings() {
