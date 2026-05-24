@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShoppingCart, Package2, FileCode2 } from "lucide-react";
+import { ShoppingCart, Package2, FileCode2, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -65,12 +65,15 @@ function ProductCard({ p }: { p: Product }) {
 
 export function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
 
   useEffect(() => {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order")
       .then(({ data }) => setProducts((data as Product[]) || []));
   }, []);
+
+  const physical = products.filter((p) => p.category === "physical");
+  const digital = products.filter((p) => p.category === "digital");
 
   return (
     <section id="shop" className="py-24 relative bg-secondary/30">
@@ -83,10 +86,53 @@ export function Shop() {
           <p className="text-muted-foreground text-lg">{t("shop_desc")}</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((p) => (
-            <ProductCard key={p.id} p={p} />
-          ))}
+        {/* Physical Products Section */}
+        {physical.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Package2 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold">{t("shop_label_physical")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
+                <p className="text-sm text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {physical.map((p) => (
+                <ProductCard key={p.id} p={p} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Digital Products Section */}
+        {digital.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FileCode2 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold">{t("shop_label_digital")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
+                <p className="text-sm text-muted-foreground">{lang === "bn" ? "ডিজিটাল অ্যাসেট, স্ক্রিপ্ট ও টেমপ্লেট" : "Digital assets, scripts & templates"}</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {digital.map((p) => (
+                <ProductCard key={p.id} p={p} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* View All Button */}
+        <div className="text-center mt-10">
+          <Button variant="outline-glow" size="lg" asChild>
+            <Link to="/products" className="inline-flex items-center gap-2">
+              {lang === "bn" ? "সব প্রোডাক্ট দেখুন" : "View All Products"} <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>
