@@ -854,8 +854,21 @@ function OrdersAdmin() {
     ws["!cols"] = [{ wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 22 }, { wch: 28 }, { wch: 30 }, { wch: 9 }, { wch: 9 }, { wch: 11 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Orders");
-    XLSX.writeFile(wb, `orders-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast.success("Excel exported");
+    try {
+      const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Excel exported");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e?.message || ""));
+    }
   };
 
   const printInvoice = (o: any) => {
