@@ -27,11 +27,11 @@ type Contact = any;
 
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { value: "orders", label: "Orders", icon: ShoppingBag },
   { value: "services", label: "Services", icon: Wrench },
   { value: "categories", label: "Categories", icon: FolderTree },
   { value: "products", label: "Products", icon: Package },
   { value: "testimonials", label: "Reviews", icon: MessageSquare },
-  { value: "orders", label: "Orders", icon: ShoppingBag },
   { value: "contacts", label: "Messages", icon: Mail },
   { value: "chatbot", label: "Chatbot", icon: Bot },
   { value: "settings", label: "Settings", icon: Settings },
