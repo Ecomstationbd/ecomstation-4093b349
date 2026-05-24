@@ -7,6 +7,7 @@ export type SiteSettings = {
   contact_phone: string;
   contact_email: string;
   contact_whatsapp: string;
+  contact_address: string;
   chatbot_enabled: string;
   chatbot_welcome_bn: string;
   chatbot_welcome_en: string;
