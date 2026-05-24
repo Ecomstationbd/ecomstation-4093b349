@@ -110,12 +110,18 @@ export function CartDrawer() {
     const { error: e2 } = await supabase.from("order_items").insert(lineItems);
     if (e2) { toast.error(e2.message); setSubmitting(false); return; }
 
+    if (abandonedIdRef.current) {
+      await supabase.from("abandoned_checkouts").update({ completed: true }).eq("id", abandonedIdRef.current);
+      abandonedIdRef.current = null;
+    }
+
     toast.success(bn ? "অর্ডার সফল হয়েছে!" : "Order placed!");
     clear();
     setForm({ customer_name: "", customer_phone: "", customer_email: "", customer_address: "", notes: "" });
     setOpen(false);
     setSubmitting(false);
     navigate(`/thank-you?order_id=${orderId}`);
+
   };
 
   return (
