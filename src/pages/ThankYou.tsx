@@ -53,6 +53,43 @@ async function loadImageAsDataURL(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
+// Bengali detection + font registration (Noto Sans Bengali via Google Fonts)
+const BN_RE = /[\u0980-\u09FF]/;
+const hasBengali = (s: string) => !!s && BN_RE.test(s);
+let bengaliFontB64: string | null | undefined;
+async function ensureBengaliFont(doc: jsPDF): Promise<boolean> {
+  if (bengaliFontB64 === null) return false;
+  if (bengaliFontB64 === undefined) {
+    try {
+      // Direct TTF from jsdelivr (Noto Sans Bengali Regular)
+      const url = "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-bengali@5.0.13/files/noto-sans-bengali-bengali-400-normal.woff";
+      // jsPDF needs TTF, so use a TTF mirror instead:
+      const ttfUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf";
+      const res = await fetch(ttfUrl);
+      if (!res.ok) throw new Error("font fetch failed");
+      const buf = new Uint8Array(await res.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+      bengaliFontB64 = btoa(bin);
+    } catch {
+      bengaliFontB64 = null;
+      return false;
+    }
+  }
+  try {
+    (doc as any).addFileToVFS("NotoSansBengali.ttf", bengaliFontB64);
+    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "normal");
+    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "bold");
+    return true;
+  } catch { return false; }
+}
+function pickFont(doc: jsPDF, text: string, style: "normal" | "bold" = "normal") {
+  if (hasBengali(text)) {
+    try { doc.setFont("NotoBengali", style); return; } catch { /* fall through */ }
+  }
+  doc.setFont("helvetica", style);
+}
+
 export default function ThankYou() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -87,6 +124,18 @@ export default function ThankYou() {
       const [pr, pg, pb] = primaryRgb();
       const brand = settings.brand_name || "ECOMSTATION";
 
+      // Register Bengali font for any non-ASCII text in the invoice
+      const bnFooter = bn ? "ধন্যবাদ আপনার অর্ডারের জন্য!" : "Thank you for your order!";
+      const needsBengali = [
+        brand, settings.contact_address, order.customer_name, order.customer_address,
+        order.notes || "", bnFooter, ...items.map(i => i.product_name),
+      ].some(t => hasBengali(t || ""));
+      const bnReady = needsBengali ? await ensureBengaliFont(doc) : false;
+      const setF = (text: string, style: "normal" | "bold" = "normal") => {
+        if (bnReady && hasBengali(text)) doc.setFont("NotoBengali", style);
+        else doc.setFont("helvetica", style);
+      };
+
       // ====== HEADER BAND ======
       doc.setFillColor(pr, pg, pb);
       doc.rect(0, 0, W, 42, "F");
@@ -108,12 +157,13 @@ export default function ThankYou() {
       }
 
       doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
+      setF(brand, "bold");
       doc.setFontSize(22);
       doc.text(brand, 40, 19);
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
+      setF(settings.contact_address || "");
       doc.text(settings.contact_address || "", 40, 26);
+      setF("", "normal");
       doc.text(`${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, 40, 31);
 
       // INVOICE label
@@ -138,14 +188,15 @@ export default function ThankYou() {
       doc.setFontSize(9);
       doc.text("BILL TO", 18, y + 6);
       doc.setTextColor(30, 30, 30);
-      doc.setFont("helvetica", "bold");
+      setF(order.customer_name, "bold");
       doc.setFontSize(11);
       doc.text(order.customer_name, 18, y + 13);
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
+      setF("", "normal");
       doc.text(order.customer_phone, 18, y + 19);
       if (order.customer_email) doc.text(order.customer_email, 18, y + 24);
       if (order.customer_address) {
+        setF(order.customer_address);
         const lines = doc.splitTextToSize(order.customer_address, half - 8);
         doc.text(lines.slice(0, 1), 18, y + 29);
       }
@@ -185,13 +236,14 @@ export default function ThankYou() {
         `BDT ${(Number(it.price) * it.quantity).toLocaleString()}`,
       ]);
 
+      const tableFont = bnReady && items.some(i => hasBengali(i.product_name)) ? "NotoBengali" : "helvetica";
       autoTable(doc, {
         startY: y + cardH + 8,
         head: [["#", "Item", "Qty", "Price", "Total"]],
         body: rows,
         theme: "grid",
-        headStyles: { fillColor: [pr, pg, pb], textColor: 255, fontStyle: "bold", halign: "left" },
-        bodyStyles: { textColor: [40, 40, 50], fontSize: 10 },
+        headStyles: { fillColor: [pr, pg, pb], textColor: 255, fontStyle: "bold", halign: "left", font: tableFont },
+        bodyStyles: { textColor: [40, 40, 50], fontSize: 10, font: tableFont },
         alternateRowStyles: { fillColor: [248, 250, 255] },
         columnStyles: {
           0: { cellWidth: 12, halign: "center" },
@@ -199,7 +251,7 @@ export default function ThankYou() {
           3: { cellWidth: 32, halign: "right" },
           4: { cellWidth: 34, halign: "right", fontStyle: "bold" },
         },
-        styles: { cellPadding: 3, lineColor: [230, 232, 240] },
+        styles: { cellPadding: 3, lineColor: [230, 232, 240], font: tableFont },
         margin: { left: 14, right: 14 },
       });
 
@@ -236,7 +288,7 @@ export default function ThankYou() {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.text("Notes", 14, finalY + 8);
-        doc.setFont("helvetica", "normal");
+        setF(order.notes, "normal");
         const lines = doc.splitTextToSize(order.notes, totalsX - 14 - 6);
         doc.text(lines, 14, finalY + 14);
       }
@@ -248,11 +300,11 @@ export default function ThankYou() {
       doc.setGState(new (doc as any).GState({ opacity: 1 }));
 
       doc.setTextColor(pr, pg, pb);
-      doc.setFont("helvetica", "bold");
+      setF(bnFooter, "bold");
       doc.setFontSize(11);
-      doc.text(bn ? "ধন্যবাদ আপনার অর্ডারের জন্য!" : "Thank you for your order!", W / 2, H - 13, { align: "center" });
+      doc.text(bnFooter, W / 2, H - 13, { align: "center" });
       doc.setTextColor(110, 110, 120);
-      doc.setFont("helvetica", "normal");
+      setF(brand, "normal");
       doc.setFontSize(8);
       doc.text(`${brand}  •  ${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, W / 2, H - 7, { align: "center" });
 
@@ -267,7 +319,7 @@ export default function ThankYou() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
+      <main className="flex-1 flex items-center justify-center px-4 pt-28 md:pt-32 pb-16">
         <div className="w-full max-w-lg text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
             <CheckCircle className="w-10 h-10 text-primary" />
