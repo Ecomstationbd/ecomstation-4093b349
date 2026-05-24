@@ -9,7 +9,7 @@ export function Footer() {
   const phone = settings.contact_phone;
   const logo = settings.logo_url || defaultLogo;
   return (
-    <footer className="border-t border-border bg-secondary/20">
+    <footer className="border-t border-border bg-secondary/20 pb-24 md:pb-0">
       <div className="container py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
           <div>
