@@ -267,7 +267,7 @@ export default function ThankYou() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
+      <main className="flex-1 flex items-center justify-center px-4 pt-28 md:pt-32 pb-16">
         <div className="w-full max-w-lg text-center space-y-6">
           <div className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
             <CheckCircle className="w-10 h-10 text-primary" />
