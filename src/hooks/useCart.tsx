@@ -5,6 +5,7 @@ export type CartItem = {
   name: string;
   price: number;
   quantity: number;
+  is_physical?: boolean;
 };
 
 type Ctx = {
@@ -15,6 +16,7 @@ type Ctx = {
   clear: () => void;
   total: number;
   count: number;
+  hasPhysical: boolean;
   open: boolean;
   setOpen: (o: boolean) => void;
 };
@@ -40,9 +42,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const count = items.reduce((s, i) => s + i.quantity, 0);
+  const hasPhysical = items.some((i) => i.is_physical);
 
   return (
-    <CartContext.Provider value={{ items, add, remove, setQty, clear, total, count, open, setOpen }}>
+    <CartContext.Provider value={{ items, add, remove, setQty, clear, total, count, hasPhysical, open, setOpen }}>
       {children}
     </CartContext.Provider>
   );
