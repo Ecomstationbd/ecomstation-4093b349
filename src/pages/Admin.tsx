@@ -664,6 +664,28 @@ function SettingsAdmin() {
     { k: "contact_whatsapp", l: "WhatsApp Number (with country code, no +)" },
   ];
 
+  // Hero Stats (dynamic)
+  const defaultStats = [
+    { value: "500+", label_bn: "সফল ক্লায়েন্ট", label_en: "Happy Clients" },
+    { value: "10+", label_bn: "সার্ভিস পিলার", label_en: "Service Pillars" },
+    { value: "24/7", label_bn: "সাপোর্ট", label_en: "Support" },
+    { value: "98%", label_bn: "সন্তুষ্টি", label_en: "Satisfaction" },
+  ];
+  let heroStats: { value: string; label_bn: string; label_en: string }[] = defaultStats;
+  try {
+    const parsed = JSON.parse(settings.hero_stats || "");
+    if (Array.isArray(parsed) && parsed.length) heroStats = parsed;
+  } catch {}
+  const updateStat = (i: number, key: "value" | "label_bn" | "label_en", val: string) => {
+    const next = heroStats.map((s, idx) => (idx === i ? { ...s, [key]: val } : s));
+    setSettings({ ...settings, hero_stats: JSON.stringify(next) });
+  };
+  const saveStats = async () => {
+    const { error } = await supabase.from("site_settings").upsert({ key: "hero_stats", value: settings.hero_stats || JSON.stringify(defaultStats) });
+    if (error) return toast.error(error.message);
+    toast.success("Hero stats saved");
+  };
+
   return (
     <div className="space-y-4 max-w-xl">
       <h2 className="text-xl font-bold">Site Settings</h2>
@@ -680,6 +702,28 @@ function SettingsAdmin() {
           <Button size="sm" variant="hero" onClick={() => save(f.k)}>Save</Button>
         </div>
       ))}
+
+      <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+        <Label className="text-base font-semibold">Hero Stats (counter section)</Label>
+        <p className="text-xs text-muted-foreground">Numeric values animate with count-up. Use formats like "500+", "98%", "24/7".</p>
+        {heroStats.map((s, i) => (
+          <div key={i} className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 rounded-md border border-border/60">
+            <div className="space-y-1">
+              <Label className="text-xs">Value</Label>
+              <Input value={s.value} onChange={(e) => updateStat(i, "value", e.target.value)} placeholder="500+" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Label (Bangla)</Label>
+              <Input value={s.label_bn} onChange={(e) => updateStat(i, "label_bn", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Label (English)</Label>
+              <Input value={s.label_en} onChange={(e) => updateStat(i, "label_en", e.target.value)} />
+            </div>
+          </div>
+        ))}
+        <Button size="sm" variant="hero" onClick={saveStats}>Save Hero Stats</Button>
+      </div>
     </div>
   );
 }
