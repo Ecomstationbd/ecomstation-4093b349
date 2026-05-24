@@ -300,11 +300,11 @@ export default function ThankYou() {
       doc.setGState(new (doc as any).GState({ opacity: 1 }));
 
       doc.setTextColor(pr, pg, pb);
-      doc.setFont("helvetica", "bold");
+      setF(bnFooter, "bold");
       doc.setFontSize(11);
-      doc.text(bn ? "ধন্যবাদ আপনার অর্ডারের জন্য!" : "Thank you for your order!", W / 2, H - 13, { align: "center" });
+      doc.text(bnFooter, W / 2, H - 13, { align: "center" });
       doc.setTextColor(110, 110, 120);
-      doc.setFont("helvetica", "normal");
+      setF(brand, "normal");
       doc.setFontSize(8);
       doc.text(`${brand}  •  ${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, W / 2, H - 7, { align: "center" });
 
