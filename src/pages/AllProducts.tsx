@@ -31,33 +31,33 @@ function ProductCard({ p }: { p: Product }) {
   return (
     <div className="group relative bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-primary/50 hover:shadow-elegant transition-smooth hover:-translate-y-1 h-full flex flex-col">
       <Link to={`/product/${p.slug}`} className="block">
-        <div className="aspect-[4/3] bg-gradient-hero flex items-center justify-center relative overflow-hidden">
+        <div className="aspect-square bg-gradient-hero flex items-center justify-center relative overflow-hidden">
           {p.image_url ? (
             <img src={p.image_url} alt={name} className="h-full w-full object-cover group-hover:scale-105 transition-smooth" />
           ) : (
-            <Icon className="h-20 w-20 text-primary/70 group-hover:scale-110 transition-smooth" />
+            <Icon className="h-16 w-16 text-primary/70 group-hover:scale-110 transition-smooth" />
           )}
           {p.badge && (
-            <span className="absolute top-3 left-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-accent text-accent-foreground uppercase tracking-wider shadow-soft">{p.badge}</span>
+            <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded-full bg-gradient-accent text-accent-foreground uppercase tracking-wider shadow-soft">{p.badge}</span>
           )}
-          <span className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-1 rounded-full bg-background/80 backdrop-blur text-muted-foreground uppercase">
+          <span className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-1 rounded-full bg-background/80 backdrop-blur text-muted-foreground uppercase">
             {p.category === "physical" ? t("shop_label_physical") : t("shop_label_digital")}
           </span>
         </div>
       </Link>
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-4 flex flex-col flex-1">
         <Link to={`/product/${p.slug}`}>
-          <h3 className="font-semibold mb-2 line-clamp-2 min-h-[3rem] hover:text-primary transition-smooth">{name}</h3>
+          <h3 className="font-semibold mb-2 line-clamp-2 min-h-[2.5rem] text-sm hover:text-primary transition-smooth">{name}</h3>
         </Link>
-        <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-2xl font-bold gradient-text">৳{Number(p.price).toLocaleString()}</span>
-          {p.old_price && <span className="text-sm text-muted-foreground line-through">৳{Number(p.old_price).toLocaleString()}</span>}
+        <div className="flex items-baseline justify-center gap-2 mb-3">
+          <span className="text-xl font-bold gradient-text">৳{Number(p.price).toLocaleString()}</span>
+          {p.old_price && <span className="text-xs text-muted-foreground line-through">৳{Number(p.old_price).toLocaleString()}</span>}
         </div>
-        <div className="flex gap-2 mt-auto">
-          <Button variant="hero" size="sm" className="flex-1" onClick={() => { add({ id: p.id, name, price: Number(p.price), is_physical: p.is_physical !== false }); toast.success(t("shop_added")); }}>
+        <div className="flex flex-col items-center gap-2 mt-auto w-full">
+          <Button variant="hero" size="sm" className="w-full" onClick={() => { add({ id: p.id, name, price: Number(p.price), is_physical: p.is_physical !== false }); toast.success(t("shop_added")); }}>
             <ShoppingCart className="mr-1 h-4 w-4" /> {t("shop_add")}
           </Button>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" className="w-full" asChild>
             <Link to={`/product/${p.slug}`}>{lang === "bn" ? "ডিটেইলস" : "Details"}</Link>
           </Button>
         </div>
