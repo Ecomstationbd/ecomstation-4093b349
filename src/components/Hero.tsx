@@ -101,14 +101,14 @@ export function Hero() {
 
           <div
             ref={ref}
-            className="mt-14 flex flex-row flex-nowrap items-center justify-between sm:justify-around gap-2 sm:gap-6 max-w-4xl mx-auto overflow-x-auto sm:overflow-visible px-1"
+            className="mt-14 grid grid-cols-2 sm:flex sm:flex-row sm:flex-nowrap sm:items-center sm:justify-around gap-6 sm:gap-6 max-w-4xl mx-auto px-1"
           >
             {stats.map((s, i) => (
-              <div key={i} className="flex-1 min-w-0 text-center">
-                <div className="text-xl sm:text-3xl md:text-4xl font-bold gradient-text tabular-nums whitespace-nowrap">
+              <div key={i} className="sm:flex-1 min-w-0 text-center">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold gradient-text tabular-nums whitespace-nowrap">
                   <CountUp value={s.value} bn={bn} run={run} />
                 </div>
-                <div className="text-[11px] sm:text-sm text-muted-foreground mt-1 whitespace-nowrap truncate">
+                <div className="text-xs sm:text-sm text-muted-foreground mt-1 whitespace-nowrap truncate">
                   {bn ? s.label_bn : s.label_en}
                 </div>
               </div>
