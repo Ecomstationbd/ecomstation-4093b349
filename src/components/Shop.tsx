@@ -89,14 +89,19 @@ export function Shop() {
         {/* Physical Products Section */}
         {physical.length > 0 && (
           <div className="mb-16">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Package2 className="h-5 w-5 text-primary" />
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Package2 className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">{t("shop_label_physical")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
+                  <p className="text-[10px] text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold">{t("shop_label_physical")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
-                <p className="text-sm text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
-              </div>
+              <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5" asChild>
+                <Link to="/products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
+              </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
 
@@ -110,14 +115,19 @@ export function Shop() {
         {/* Digital Products Section */}
         {digital.length > 0 && (
           <div className="mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FileCode2 className="h-5 w-5 text-primary" />
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileCode2 className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">{t("shop_label_digital")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
+                  <p className="text-[10px] text-muted-foreground">{lang === "bn" ? "ডিজিটাল অ্যাসেট, স্ক্রিপ্ট ও টেমপ্লেট" : "Digital assets, scripts & templates"}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold">{t("shop_label_digital")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
-                <p className="text-sm text-muted-foreground">{lang === "bn" ? "ডিজিটাল অ্যাসেট, স্ক্রিপ্ট ও টেমপ্লেট" : "Digital assets, scripts & templates"}</p>
-              </div>
+              <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5" asChild>
+                <Link to="/products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
+              </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {digital.map((p) => (
@@ -127,14 +137,6 @@ export function Shop() {
           </div>
         )}
 
-        {/* View All Button */}
-        <div className="text-center mt-10">
-          <Button variant="outline-glow" size="lg" asChild>
-            <Link to="/products" className="inline-flex items-center gap-2">
-              {lang === "bn" ? "সব প্রোডাক্ট দেখুন" : "View All Products"} <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
       </div>
     </section>
   );
