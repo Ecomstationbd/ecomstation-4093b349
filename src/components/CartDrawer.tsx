@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -34,9 +34,44 @@ export function CartDrawer() {
   const [form, setForm] = useState({ customer_name: "", customer_phone: "", customer_email: "", customer_address: "", notes: "" });
   const [location, setLocation] = useState<Location>("inside");
   const [submitting, setSubmitting] = useState(false);
+  const abandonedIdRef = useRef<string | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const deliveryCharge = hasPhysical ? DELIVERY[location] : 0;
   const grandTotal = subtotal + deliveryCharge;
+
+  // Save partial checkout (abandoned cart capture) — debounced
+  useEffect(() => {
+    if (!open) return;
+    const hasAnyContact =
+      form.customer_name.trim() || form.customer_phone.trim() || form.customer_email.trim() || form.customer_address.trim();
+    if (!hasAnyContact || items.length === 0) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      const payload = {
+        customer_name: form.customer_name.trim() || null,
+        customer_phone: form.customer_phone.trim() || null,
+        customer_email: form.customer_email.trim() || null,
+        customer_address: form.customer_address.trim() || null,
+        notes: form.notes.trim() || null,
+        cart_items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        subtotal,
+        user_id: user?.id ?? null,
+      };
+      if (abandonedIdRef.current) {
+        await supabase.from("abandoned_checkouts").update(payload).eq("id", abandonedIdRef.current);
+      } else {
+        const { data } = await supabase.from("abandoned_checkouts").insert(payload).select("id").maybeSingle();
+        if (data?.id) abandonedIdRef.current = data.id;
+      }
+    }, 1200);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [form, items, subtotal, open, user]);
+
 
   const submit = async () => {
     if (items.length === 0) { toast.error(bn ? "কার্ট খালি" : "Cart is empty"); return; }
@@ -75,12 +110,18 @@ export function CartDrawer() {
     const { error: e2 } = await supabase.from("order_items").insert(lineItems);
     if (e2) { toast.error(e2.message); setSubmitting(false); return; }
 
+    if (abandonedIdRef.current) {
+      await supabase.from("abandoned_checkouts").update({ completed: true }).eq("id", abandonedIdRef.current);
+      abandonedIdRef.current = null;
+    }
+
     toast.success(bn ? "অর্ডার সফল হয়েছে!" : "Order placed!");
     clear();
     setForm({ customer_name: "", customer_phone: "", customer_email: "", customer_address: "", notes: "" });
     setOpen(false);
     setSubmitting(false);
     navigate(`/thank-you?order_id=${orderId}`);
+
   };
 
   return (

@@ -50,15 +50,16 @@ export default function Admin() {
   useEffect(() => {
     if (!isAdmin) return;
     const fetchIncomplete = async () => {
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const { count } = await supabase.from("orders").select("id", { count: "exact", head: true })
-        .eq("status", "pending").lt("created_at", cutoff);
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await supabase.from("abandoned_checkouts").select("id", { count: "exact", head: true })
+        .eq("completed", false).gte("created_at", since);
       setIncompleteCount(count || 0);
     };
     fetchIncomplete();
     const t = setInterval(fetchIncomplete, 60000);
     return () => clearInterval(t);
   }, [isAdmin]);
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -165,21 +166,31 @@ export default function Admin() {
 /* ---------- Dashboard ---------- */
 function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
   const [orders, setOrders] = useState<any[]>([]);
-  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [abandoned, setAbandoned] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const loadAbandoned = async () => {
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase.from("abandoned_checkouts").select("*")
+      .eq("completed", false).gte("created_at", since).order("updated_at", { ascending: false });
+    setAbandoned(data || []);
+  };
 
   useEffect(() => {
     (async () => {
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: o } = await supabase.from("orders").select("*").gte("created_at", since).order("created_at", { ascending: false });
       setOrders(o || []);
-      if (o && o.length) {
-        const { data: oi } = await supabase.from("order_items").select("order_id").in("order_id", o.map((x) => x.id));
-        setOrderItems(oi || []);
-      }
+      await loadAbandoned();
       setLoading(false);
     })();
   }, []);
+
+  const deleteAbandoned = async (id: string) => {
+    const { error } = await supabase.from("abandoned_checkouts").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    setAbandoned((p) => p.filter((x) => x.id !== id));
+  };
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -191,10 +202,8 @@ function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
     const todaySales = todayOrders.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0);
     const weekOrders = orders.filter((o) => new Date(o.created_at).getTime() >= weekAgo);
     const weekSales = weekOrders.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0);
-    const monthSales = orders.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0);
     const pending = orders.filter((o) => o.status === "pending").length;
 
-    // 7-day daily chart
     const daily: { day: string; orders: number; sales: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
@@ -210,18 +219,8 @@ function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
       });
     }
 
-    // Incomplete: pending older than 24h OR has no order_items
-    const itemsByOrder = new Set(orderItems.map((i) => i.order_id));
-    const dayMs = 86400000;
-    const incomplete = orders.filter((o) => {
-      const age = now.getTime() - new Date(o.created_at).getTime();
-      const noItems = !itemsByOrder.has(o.id);
-      const stalePending = o.status === "pending" && age > dayMs;
-      return noItems || stalePending;
-    });
-
-    return { todayOrders: todayOrders.length, todaySales, weekOrders: weekOrders.length, weekSales, monthSales, pending, daily, incomplete };
-  }, [orders, orderItems]);
+    return { todayOrders: todayOrders.length, todaySales, weekOrders: weekOrders.length, weekSales, pending, daily };
+  }, [orders]);
 
   if (loading) return <div className="text-center py-12 text-muted-foreground">Loading analytics…</div>;
 
@@ -247,7 +246,7 @@ function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
         <div className="relative">
           <div className="text-xs uppercase tracking-wider opacity-80">Overview</div>
           <h1 className="text-2xl sm:text-3xl font-bold mt-1">Daily Report & Analytics</h1>
-          <p className="text-sm opacity-90 mt-1">Track today's sales, weekly trends and spot incomplete orders.</p>
+          <p className="text-sm opacity-90 mt-1">Track today's sales, weekly trends and recover abandoned checkouts.</p>
         </div>
       </div>
 
@@ -255,7 +254,7 @@ function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
         <StatCard icon={ShoppingBag} label="Today's Orders" value={stats.todayOrders} sub={`${stats.pending} pending`} />
         <StatCard icon={DollarSign} label="Today's Sales" value={`৳${stats.todaySales.toLocaleString()}`} sub="Confirmed+" />
         <StatCard icon={TrendingUp} label="7-Day Sales" value={`৳${stats.weekSales.toLocaleString()}`} sub={`${stats.weekOrders} orders`} />
-        <StatCard icon={AlertTriangle} label="Incomplete" value={stats.incomplete.length} sub="Need attention" tone={stats.incomplete.length ? "destructive" : "primary"} />
+        <StatCard icon={AlertTriangle} label="Abandoned" value={abandoned.length} sub="Last 7 days" tone={abandoned.length ? "destructive" : "primary"} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -299,30 +298,49 @@ function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
       <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold flex items-center gap-2">
-            <AlertTriangle className={`h-4 w-4 ${stats.incomplete.length ? "text-destructive" : "text-muted-foreground"}`} />
-            Incomplete Orders ({stats.incomplete.length})
+            <AlertTriangle className={`h-4 w-4 ${abandoned.length ? "text-destructive" : "text-muted-foreground"}`} />
+            Abandoned Checkouts ({abandoned.length})
           </h3>
-          <Button size="sm" variant="outline" onClick={() => onNavigate("orders")}>View All Orders</Button>
+          <Button size="sm" variant="outline" onClick={loadAbandoned}>Refresh</Button>
         </div>
-        {stats.incomplete.length === 0 ? (
-          <div className="text-center py-8 text-sm text-muted-foreground">All clear — no incomplete orders 🎉</div>
+        <p className="text-xs text-muted-foreground mb-3">Customers who entered their info but did not place the order. Call them back to recover the sale.</p>
+        {abandoned.length === 0 ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">No abandoned checkouts in the last 7 days 🎉</div>
         ) : (
           <div className="space-y-2">
-            {stats.incomplete.slice(0, 10).map((o) => {
-              const noItems = !orderItems.some((i) => i.order_id === o.id);
-              const ageHrs = Math.floor((Date.now() - new Date(o.created_at).getTime()) / 3600000);
+            {abandoned.map((a) => {
+              const items = Array.isArray(a.cart_items) ? a.cart_items : [];
+              const ageHrs = Math.floor((Date.now() - new Date(a.updated_at).getTime()) / 3600000);
+              const ageLabel = ageHrs < 1 ? "just now" : ageHrs < 24 ? `${ageHrs}h ago` : `${Math.floor(ageHrs / 24)}d ago`;
               return (
-                <div key={o.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
-                  <div className="min-w-0">
-                    <div className="font-medium text-sm truncate">{o.customer_name} • {o.customer_phone}</div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
-                      <Clock className="h-3 w-3" />{ageHrs}h ago
-                      <span className="px-1.5 py-0.5 rounded bg-destructive/15 text-destructive text-[10px] uppercase">
-                        {noItems ? "No items" : "Stale pending"}
-                      </span>
+                <div key={a.id} className="flex items-start justify-between gap-3 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{a.customer_name || "—"} • {a.customer_phone || "no phone"}</div>
+                    {a.customer_email && <div className="text-xs text-muted-foreground truncate">{a.customer_email}</div>}
+                    {a.customer_address && <div className="text-xs text-muted-foreground truncate">📍 {a.customer_address}</div>}
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                      <Clock className="h-3 w-3" />{ageLabel}
+                      {items.length > 0 && (
+                        <span className="px-1.5 py-0.5 rounded bg-muted text-[10px]">{items.length} item{items.length > 1 ? "s" : ""}</span>
+                      )}
+                      {a.subtotal > 0 && <span className="font-semibold text-foreground">৳{Number(a.subtotal).toLocaleString()}</span>}
                     </div>
+                    {items.length > 0 && (
+                      <div className="text-xs text-muted-foreground mt-1 truncate">
+                        {items.map((i: any) => `${i.name} ×${i.quantity}`).join(", ")}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-sm font-semibold whitespace-nowrap">৳{Number(o.total || 0).toLocaleString()}</div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    {a.customer_phone && (
+                      <Button asChild size="sm" variant="outline" className="h-7 text-xs">
+                        <a href={`tel:${a.customer_phone}`}>Call</a>
+                      </Button>
+                    )}
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => deleteAbandoned(a.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -332,6 +350,7 @@ function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
     </div>
   );
 }
+
 
 
 /* ---------- Services ---------- */
