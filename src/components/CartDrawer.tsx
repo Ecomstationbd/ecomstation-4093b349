@@ -38,8 +38,6 @@ function getAbandonedClient(token: string) {
   );
 }
 
-import { toast } from "sonner";
-import { z } from "zod";
 
 const orderSchema = z.object({
   customer_name: z.string().trim().min(1).max(200),
