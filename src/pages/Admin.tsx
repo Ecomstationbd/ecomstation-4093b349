@@ -85,7 +85,7 @@ export default function Admin() {
         </div>
       </header>
 
-      <main className="container px-4 py-6">
+      <main className="container px-4 py-6 pb-32 md:pb-6">
         <div className="mb-6 p-5 sm:p-6 rounded-2xl bg-gradient-primary text-primary-foreground shadow-elegant relative overflow-hidden">
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white,transparent_50%)]" />
           <div className="relative">
