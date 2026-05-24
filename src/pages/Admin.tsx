@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +10,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import {
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, SidebarMenuBadge,
+} from "@/components/ui/sidebar";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 type Service = any;
 type Product = any;
@@ -20,10 +25,37 @@ type Testimonial = any;
 type Order = any;
 type Contact = any;
 
+const NAV_ITEMS = [
+  { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { value: "services", label: "Services", icon: Wrench },
+  { value: "categories", label: "Categories", icon: FolderTree },
+  { value: "products", label: "Products", icon: Package },
+  { value: "testimonials", label: "Reviews", icon: MessageSquare },
+  { value: "orders", label: "Orders", icon: ShoppingBag },
+  { value: "contacts", label: "Messages", icon: Mail },
+  { value: "chatbot", label: "Chatbot", icon: Bot },
+  { value: "settings", label: "Settings", icon: Settings },
+];
+
 export default function Admin() {
   const { user, isAdmin, loading, signOut } = useAuth();
   const nav = useNavigate();
   const [claiming, setClaiming] = useState(false);
+  const [active, setActive] = useState("dashboard");
+  const [incompleteCount, setIncompleteCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchIncomplete = async () => {
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await supabase.from("orders").select("id", { count: "exact", head: true })
+        .eq("status", "pending").lt("created_at", cutoff);
+      setIncompleteCount(count || 0);
+    };
+    fetchIncomplete();
+    const t = setInterval(fetchIncomplete, 60000);
+    return () => clearInterval(t);
+  }, [isAdmin]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
   if (!user) return <Navigate to="/auth" replace />;
@@ -53,72 +85,247 @@ export default function Admin() {
     );
   }
 
-  const tabs = [
-    { value: "services", label: "Services", icon: Wrench },
-    { value: "categories", label: "Categories", icon: FolderTree },
-    { value: "products", label: "Products", icon: Package },
-    { value: "testimonials", label: "Reviews", icon: MessageSquare },
-    { value: "orders", label: "Orders", icon: ShoppingBag },
-    { value: "contacts", label: "Messages", icon: Mail },
-    { value: "chatbot", label: "Chatbot", icon: Bot },
-    { value: "settings", label: "Settings", icon: Settings },
-  ];
+  const activeItem = NAV_ITEMS.find((i) => i.value === active);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <header className="border-b border-border/60 bg-card/80 backdrop-blur-xl sticky top-0 z-40">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
-              <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-primary/5">
+        <Sidebar collapsible="icon">
+          <SidebarHeader>
+            <div className="flex items-center gap-2 px-2 py-2">
+              <div className="h-9 w-9 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow shrink-0">
+                <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div className="leading-tight group-data-[collapsible=icon]:hidden">
+                <div className="font-bold gradient-text text-sm">Admin Panel</div>
+                <div className="text-[11px] text-muted-foreground truncate max-w-[140px]">{user.email}</div>
+              </div>
             </div>
-            <div className="leading-tight">
-              <div className="font-bold gradient-text text-base">Admin Panel</div>
-              <div className="text-[11px] text-muted-foreground hidden sm:block">{user.email}</div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Manage</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {NAV_ITEMS.map((it) => (
+                    <SidebarMenuItem key={it.value}>
+                      <SidebarMenuButton isActive={active === it.value} onClick={() => setActive(it.value)} tooltip={it.label}>
+                        <it.icon className="h-4 w-4" />
+                        <span>{it.label}</span>
+                      </SidebarMenuButton>
+                      {it.value === "orders" && incompleteCount > 0 && (
+                        <SidebarMenuBadge className="bg-destructive text-destructive-foreground">{incompleteCount}</SidebarMenuBadge>
+                      )}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarFooter>
+            <div className="flex flex-col gap-1 p-1 group-data-[collapsible=icon]:hidden">
+              <Button variant="outline" size="sm" onClick={() => nav("/")}>View Site</Button>
+              <Button variant="ghost" size="sm" onClick={async () => { await signOut(); nav("/"); }}><LogOut className="h-4 w-4 mr-1" />Logout</Button>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
+          </SidebarFooter>
+        </Sidebar>
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-14 flex items-center justify-between border-b border-border/60 bg-card/80 backdrop-blur-xl sticky top-0 z-40 px-3">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <div className="font-semibold text-sm flex items-center gap-2">
+                {activeItem && <activeItem.icon className="h-4 w-4 text-primary" />}
+                {activeItem?.label}
+              </div>
+            </div>
             <ThemeToggle />
-            <Button variant="outline" size="sm" onClick={() => nav("/")}>View Site</Button>
-            <Button variant="ghost" size="sm" onClick={async () => { await signOut(); nav("/"); }}><LogOut className="h-4 w-4 mr-1" />Logout</Button>
+          </header>
+
+          <main className="flex-1 px-4 py-6 pb-32 md:pb-6 max-w-7xl w-full mx-auto">
+            {active === "dashboard" && <DashboardAdmin onNavigate={setActive} />}
+            {active === "services" && <ServicesAdmin />}
+            {active === "categories" && <CategoriesAdmin />}
+            {active === "products" && <ProductsAdmin />}
+            {active === "testimonials" && <TestimonialsAdmin />}
+            {active === "orders" && <OrdersAdmin />}
+            {active === "contacts" && <ContactsAdmin />}
+            {active === "chatbot" && <ChatbotAdmin />}
+            {active === "settings" && <SettingsAdmin />}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+/* ---------- Dashboard ---------- */
+function DashboardAdmin({ onNavigate }: { onNavigate: (v: string) => void }) {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: o } = await supabase.from("orders").select("*").gte("created_at", since).order("created_at", { ascending: false });
+      setOrders(o || []);
+      if (o && o.length) {
+        const { data: oi } = await supabase.from("order_items").select("order_id").in("order_id", o.map((x) => x.id));
+        setOrderItems(oi || []);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const weekAgo = now.getTime() - 7 * 86400000;
+    const isPaid = (s: string) => ["confirmed", "shipped", "delivered"].includes(s);
+
+    const todayOrders = orders.filter((o) => new Date(o.created_at).getTime() >= startOfDay);
+    const todaySales = todayOrders.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0);
+    const weekOrders = orders.filter((o) => new Date(o.created_at).getTime() >= weekAgo);
+    const weekSales = weekOrders.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0);
+    const monthSales = orders.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0);
+    const pending = orders.filter((o) => o.status === "pending").length;
+
+    // 7-day daily chart
+    const daily: { day: string; orders: number; sales: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const next = d.getTime() + 86400000;
+      const list = orders.filter((o) => {
+        const t = new Date(o.created_at).getTime();
+        return t >= d.getTime() && t < next;
+      });
+      daily.push({
+        day: d.toLocaleDateString(undefined, { weekday: "short" }),
+        orders: list.length,
+        sales: list.filter((o) => isPaid(o.status)).reduce((a, o) => a + Number(o.total || 0), 0),
+      });
+    }
+
+    // Incomplete: pending older than 24h OR has no order_items
+    const itemsByOrder = new Set(orderItems.map((i) => i.order_id));
+    const dayMs = 86400000;
+    const incomplete = orders.filter((o) => {
+      const age = now.getTime() - new Date(o.created_at).getTime();
+      const noItems = !itemsByOrder.has(o.id);
+      const stalePending = o.status === "pending" && age > dayMs;
+      return noItems || stalePending;
+    });
+
+    return { todayOrders: todayOrders.length, todaySales, weekOrders: weekOrders.length, weekSales, monthSales, pending, daily, incomplete };
+  }, [orders, orderItems]);
+
+  if (loading) return <div className="text-center py-12 text-muted-foreground">Loading analytics…</div>;
+
+  const StatCard = ({ icon: Icon, label, value, sub, tone = "primary" }: any) => (
+    <div className="bg-card border border-border rounded-2xl p-4 shadow-soft hover:shadow-elegant transition-shadow">
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
+          <div className="text-2xl font-bold mt-1">{value}</div>
+          {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
+        </div>
+        <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${tone === "destructive" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary"}`}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-primary text-primary-foreground shadow-elegant relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white,transparent_50%)]" />
+        <div className="relative">
+          <div className="text-xs uppercase tracking-wider opacity-80">Overview</div>
+          <h1 className="text-2xl sm:text-3xl font-bold mt-1">Daily Report & Analytics</h1>
+          <p className="text-sm opacity-90 mt-1">Track today's sales, weekly trends and spot incomplete orders.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard icon={ShoppingBag} label="Today's Orders" value={stats.todayOrders} sub={`${stats.pending} pending`} />
+        <StatCard icon={DollarSign} label="Today's Sales" value={`৳${stats.todaySales.toLocaleString()}`} sub="Confirmed+" />
+        <StatCard icon={TrendingUp} label="7-Day Sales" value={`৳${stats.weekSales.toLocaleString()}`} sub={`${stats.weekOrders} orders`} />
+        <StatCard icon={AlertTriangle} label="Incomplete" value={stats.incomplete.length} sub="Need attention" tone={stats.incomplete.length ? "destructive" : "primary"} />
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Sales — Last 7 Days</h3>
+            <TrendingUp className="h-4 w-4 text-primary" />
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={stats.daily}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <RTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Line type="monotone" dataKey="sales" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
-      </header>
 
-      <main className="container px-4 py-6 pb-32 md:pb-6">
-        <div className="mb-6 p-5 sm:p-6 rounded-2xl bg-gradient-primary text-primary-foreground shadow-elegant relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white,transparent_50%)]" />
-          <div className="relative">
-            <div className="text-xs uppercase tracking-wider opacity-80">Welcome back</div>
-            <h1 className="text-2xl sm:text-3xl font-bold mt-1">Dashboard Overview</h1>
-            <p className="text-sm opacity-90 mt-1">Manage your store, services and customer engagement from one place.</p>
+        <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Orders — Last 7 Days</h3>
+            <ShoppingBag className="h-4 w-4 text-primary" />
+          </div>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.daily}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                <RTooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Bar dataKey="orders" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        <Tabs defaultValue="services">
-          <TabsList className="flex flex-wrap h-auto gap-1 bg-card/60 border border-border/60 p-1.5 rounded-xl backdrop-blur-sm">
-            {tabs.map((t) => (
-              <TabsTrigger
-                key={t.value}
-                value={t.value}
-                className="gap-1.5 rounded-lg data-[state=active]:bg-gradient-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-soft"
-              >
-                <t.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <TabsContent value="services" className="mt-4"><ServicesAdmin /></TabsContent>
-          <TabsContent value="categories" className="mt-4"><CategoriesAdmin /></TabsContent>
-          <TabsContent value="products" className="mt-4"><ProductsAdmin /></TabsContent>
-          <TabsContent value="testimonials" className="mt-4"><TestimonialsAdmin /></TabsContent>
-          <TabsContent value="orders" className="mt-4"><OrdersAdmin /></TabsContent>
-          <TabsContent value="contacts" className="mt-4"><ContactsAdmin /></TabsContent>
-          <TabsContent value="chatbot" className="mt-4"><ChatbotAdmin /></TabsContent>
-          <TabsContent value="settings" className="mt-4"><SettingsAdmin /></TabsContent>
-        </Tabs>
-      </main>
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-soft">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <AlertTriangle className={`h-4 w-4 ${stats.incomplete.length ? "text-destructive" : "text-muted-foreground"}`} />
+            Incomplete Orders ({stats.incomplete.length})
+          </h3>
+          <Button size="sm" variant="outline" onClick={() => onNavigate("orders")}>View All Orders</Button>
+        </div>
+        {stats.incomplete.length === 0 ? (
+          <div className="text-center py-8 text-sm text-muted-foreground">All clear — no incomplete orders 🎉</div>
+        ) : (
+          <div className="space-y-2">
+            {stats.incomplete.slice(0, 10).map((o) => {
+              const noItems = !orderItems.some((i) => i.order_id === o.id);
+              const ageHrs = Math.floor((Date.now() - new Date(o.created_at).getTime()) / 3600000);
+              return (
+                <div key={o.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm truncate">{o.customer_name} • {o.customer_phone}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                      <Clock className="h-3 w-3" />{ageHrs}h ago
+                      <span className="px-1.5 py-0.5 rounded bg-destructive/15 text-destructive text-[10px] uppercase">
+                        {noItems ? "No items" : "Stale pending"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm font-semibold whitespace-nowrap">৳{Number(o.total || 0).toLocaleString()}</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
