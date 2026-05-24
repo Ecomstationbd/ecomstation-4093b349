@@ -128,12 +128,12 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Hind Siliguri', system-ui, -apple-system, sans-serif;
+    font-family: 'BanglaDigits', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
     font-feature-settings: "ss01", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Hind Siliguri', system-ui, sans-serif;
+    font-family: 'BanglaDigits', 'Hind Siliguri', system-ui, sans-serif;
     @apply tracking-tight;
   }
 }
