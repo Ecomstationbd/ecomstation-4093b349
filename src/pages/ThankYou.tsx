@@ -124,6 +124,18 @@ export default function ThankYou() {
       const [pr, pg, pb] = primaryRgb();
       const brand = settings.brand_name || "ECOMSTATION";
 
+      // Register Bengali font for any non-ASCII text in the invoice
+      const bnFooter = bn ? "ধন্যবাদ আপনার অর্ডারের জন্য!" : "Thank you for your order!";
+      const needsBengali = [
+        brand, settings.contact_address, order.customer_name, order.customer_address,
+        order.notes || "", bnFooter, ...items.map(i => i.product_name),
+      ].some(t => hasBengali(t || ""));
+      const bnReady = needsBengali ? await ensureBengaliFont(doc) : false;
+      const setF = (text: string, style: "normal" | "bold" = "normal") => {
+        if (bnReady && hasBengali(text)) doc.setFont("NotoBengali", style);
+        else doc.setFont("helvetica", style);
+      };
+
       // ====== HEADER BAND ======
       doc.setFillColor(pr, pg, pb);
       doc.rect(0, 0, W, 42, "F");
