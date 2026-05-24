@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag, Home, MessageCircle } from "lucide-react";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ThankYou() {
   const navigate = useNavigate();
@@ -12,10 +13,15 @@ export default function ThankYou() {
   const { lang } = useLanguage();
   const bn = lang === "bn";
   const orderId = searchParams.get("order_id");
+  const [orderNo, setOrderNo] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 1);
-  }, []);
+    if (orderId) {
+      supabase.from("orders").select("order_number").eq("id", orderId).maybeSingle()
+        .then(({ data }) => { if (data?.order_number) setOrderNo(data.order_number); });
+    }
+  }, [orderId]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,7 +45,7 @@ export default function ThankYou() {
           {orderId && (
             <div className="inline-flex items-center gap-2 bg-muted rounded-full px-5 py-2.5 text-sm font-medium text-foreground mx-auto">
               <span className="text-muted-foreground">{bn ? "অর্ডার আইডি:" : "Order ID:"}</span>
-              <span className="font-mono">{orderId.slice(0, 8).toUpperCase()}</span>
+              <span className="font-mono">{orderNo || orderId.slice(0, 8).toUpperCase()}</span>
             </div>
           )}
 

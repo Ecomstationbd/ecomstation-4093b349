@@ -792,7 +792,7 @@ function OrdersAdmin() {
       if (!q) return true;
       const its = items[o.id] || [];
       const hay = [
-        o.id, o.id.slice(0, 8), o.customer_name, o.customer_phone, o.customer_email,
+        o.id, o.order_number || "", o.customer_name, o.customer_phone, o.customer_email,
         ...its.map((i) => i.product_name), ...its.map((i) => i.product_id || ""),
       ].join(" ").toLowerCase();
       return hay.includes(q);
@@ -837,7 +837,7 @@ function OrdersAdmin() {
     const data = rows.map((o) => {
       const its = (items[o.id] || []).map((i) => `${i.product_name} x${i.quantity}`).join(" | ");
       return {
-        "Order No": o.id.slice(0, 8).toUpperCase(),
+        "Order No": o.order_number || o.id.slice(0, 8).toUpperCase(),
         "Date": new Date(o.created_at).toLocaleString(),
         "Customer": o.customer_name,
         "Phone": o.customer_phone,
@@ -873,7 +873,7 @@ function OrdersAdmin() {
 
   const printInvoice = (o: any) => {
     const its = items[o.id] || [];
-    const orderNo = o.id.slice(0, 8).toUpperCase();
+    const orderNo = o.order_number || o.id.slice(0, 8).toUpperCase();
     // Generate barcode SVG
     const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     try {
@@ -1001,7 +1001,7 @@ function OrdersAdmin() {
                 <input type="checkbox" checked={isSel} onChange={() => toggleOne(o.id)} className="h-4 w-4 mt-1 accent-primary shrink-0" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-muted">#{o.id.slice(0, 8).toUpperCase()}</span>
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-muted">#{o.order_number || o.id.slice(0, 8).toUpperCase()}</span>
                     <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full border ${statusTone[o.status] || "bg-muted"}`}>{o.status}</span>
                   </div>
                   <div className="font-semibold mt-1">{o.customer_name} • {o.customer_phone}</div>
