@@ -53,41 +53,73 @@ async function loadImageAsDataURL(url: string): Promise<string | null> {
   } catch { return null; }
 }
 
-// Bengali detection + font registration (Noto Sans Bengali via Google Fonts)
+// Bengali detection
 const BN_RE = /[\u0980-\u09FF]/;
 const hasBengali = (s: string) => !!s && BN_RE.test(s);
-let bengaliFontB64: string | null | undefined;
-async function ensureBengaliFont(doc: jsPDF): Promise<boolean> {
-  if (bengaliFontB64 === null) return false;
-  if (bengaliFontB64 === undefined) {
+
+// Load Noto Sans Bengali as a real web font so the browser shapes conjuncts correctly.
+let bengaliFontLoaded: Promise<boolean> | null = null;
+function ensureBengaliWebFont(): Promise<boolean> {
+  if (bengaliFontLoaded) return bengaliFontLoaded;
+  bengaliFontLoaded = (async () => {
     try {
-      // Direct TTF from jsdelivr (Noto Sans Bengali Regular)
-      const url = "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-bengali@5.0.13/files/noto-sans-bengali-bengali-400-normal.woff";
-      // jsPDF needs TTF, so use a TTF mirror instead:
-      const ttfUrl = "https://raw.githubusercontent.com/googlefonts/noto-fonts/main/hinted/ttf/NotoSansBengali/NotoSansBengali-Regular.ttf";
-      const res = await fetch(ttfUrl);
-      if (!res.ok) throw new Error("font fetch failed");
-      const buf = new Uint8Array(await res.arrayBuffer());
-      let bin = "";
-      for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
-      bengaliFontB64 = btoa(bin);
-    } catch {
-      bengaliFontB64 = null;
-      return false;
-    }
-  }
-  try {
-    (doc as any).addFileToVFS("NotoSansBengali.ttf", bengaliFontB64);
-    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "normal");
-    (doc as any).addFont("NotoSansBengali.ttf", "NotoBengali", "bold");
-    return true;
-  } catch { return false; }
+      const base = "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-bengali@5.0.13/files";
+      const reg = new FontFace("NotoBengaliWeb", `url(${base}/noto-sans-bengali-bengali-400-normal.woff2) format("woff2")`, { weight: "400" });
+      const bold = new FontFace("NotoBengaliWeb", `url(${base}/noto-sans-bengali-bengali-700-normal.woff2) format("woff2")`, { weight: "700" });
+      await Promise.all([reg.load(), bold.load()]);
+      (document as any).fonts.add(reg);
+      (document as any).fonts.add(bold);
+      return true;
+    } catch { return false; }
+  })();
+  return bengaliFontLoaded;
 }
-function pickFont(doc: jsPDF, text: string, style: "normal" | "bold" = "normal") {
-  if (hasBengali(text)) {
-    try { doc.setFont("NotoBengali", style); return; } catch { /* fall through */ }
+
+// Render text into a PNG dataURL via canvas — the browser does proper Bengali script shaping.
+function renderTextImage(text: string, opts: { fontPt: number; bold?: boolean; color?: string }): { dataUrl: string; wMm: number; hMm: number } {
+  const scale = 4; // px per pt for crisp output
+  const fontPx = opts.fontPt * scale;
+  const weight = opts.bold ? 700 : 400;
+  const family = `"NotoBengaliWeb","Noto Sans Bengali","Hind Siliguri","Helvetica","Arial",sans-serif`;
+  const measure = document.createElement("canvas").getContext("2d")!;
+  measure.font = `${weight} ${fontPx}px ${family}`;
+  const w = Math.max(1, Math.ceil(measure.measureText(text).width)) + 6;
+  const h = Math.ceil(fontPx * 1.4);
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+  ctx.font = `${weight} ${fontPx}px ${family}`;
+  ctx.fillStyle = opts.color || "#000000";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(text, 2, fontPx);
+  const ptToMm = 0.3528;
+  return { dataUrl: canvas.toDataURL("image/png"), wMm: (w / scale) * ptToMm, hMm: (h / scale) * ptToMm };
+}
+
+// Unified text drawer — native for ASCII, image for Bengali.
+function drawText(
+  doc: jsPDF,
+  text: string,
+  x: number,
+  y: number,
+  opts: { sizePt: number; bold?: boolean; color?: [number, number, number]; align?: "left" | "right" | "center"; maxWidthMm?: number }
+) {
+  if (!text) return;
+  const [r, g, b] = opts.color || [0, 0, 0];
+  if (!hasBengali(text)) {
+    doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+    doc.setFontSize(opts.sizePt);
+    doc.setTextColor(r, g, b);
+    doc.text(text, x, y, { align: opts.align || "left" });
+    return;
   }
-  doc.setFont("helvetica", style);
+  const img = renderTextImage(text, { fontPt: opts.sizePt, bold: opts.bold, color: `rgb(${r},${g},${b})` });
+  let w = img.wMm, h = img.hMm;
+  if (opts.maxWidthMm && w > opts.maxWidthMm) { const k = opts.maxWidthMm / w; w *= k; h *= k; }
+  let drawX = x;
+  if (opts.align === "right") drawX = x - w;
+  else if (opts.align === "center") drawX = x - w / 2;
+  doc.addImage(img.dataUrl, "PNG", drawX, y - h * 0.82, w, h);
 }
 
 export default function ThankYou() {
