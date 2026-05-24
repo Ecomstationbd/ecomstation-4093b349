@@ -20,6 +20,7 @@ import {
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import * as XLSX from "xlsx";
 import JsBarcode from "jsbarcode";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 type Service = any;
 type Product = any;
