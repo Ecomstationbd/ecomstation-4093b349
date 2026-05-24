@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { ShoppingCart, Package2, FileCode2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import Autoplay from "embla-carousel-autoplay";
 import { Button } from "@/components/ui/button";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { toast } from "sonner";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,39 +63,14 @@ function ProductCard({ p }: { p: Product }) {
   );
 }
 
-function ProductSlider({ items, idKey }: { items: Product[]; idKey: string }) {
-  if (items.length === 0) return null;
-  return (
-    <Carousel
-      key={idKey}
-      opts={{ align: "start", loop: items.length > 3 }}
-      plugins={[Autoplay({ delay: 3500, stopOnInteraction: true, stopOnMouseEnter: true })]}
-      className="px-2"
-    >
-      <CarouselContent className="-ml-4">
-        {items.map((p) => (
-          <CarouselItem key={p.id} className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-            <ProductCard p={p} />
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-      <CarouselPrevious className="hidden md:flex -left-4 lg:-left-12" />
-      <CarouselNext className="hidden md:flex -right-4 lg:-right-12" />
-    </Carousel>
-  );
-}
-
 export function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
-  const { t, lang } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order")
       .then(({ data }) => setProducts((data as Product[]) || []));
   }, []);
-
-  const physical = products.filter((p) => p.category === "physical");
-  const digital = products.filter((p) => p.category === "digital");
 
   return (
     <section id="shop" className="py-24 relative bg-secondary/30">
@@ -110,37 +83,11 @@ export function Shop() {
           <p className="text-muted-foreground text-lg">{t("shop_desc")}</p>
         </div>
 
-        {physical.length > 0 && (
-          <div className="mb-16">
-            <div className="flex items-end justify-between mb-6 px-2">
-              <div>
-                <div className="text-xs font-semibold text-primary mb-1 tracking-wider uppercase flex items-center gap-2">
-                  <Package2 className="h-4 w-4" /> {t("shop_label_physical")}
-                </div>
-                <h3 className="text-2xl md:text-3xl font-bold">
-                  {lang === "bn" ? "ফিজিক্যাল প্রোডাক্ট" : "Physical Products"}
-                </h3>
-              </div>
-            </div>
-            <ProductSlider items={physical} idKey="physical" />
-          </div>
-        )}
-
-        {digital.length > 0 && (
-          <div>
-            <div className="flex items-end justify-between mb-6 px-2">
-              <div>
-                <div className="text-xs font-semibold text-primary mb-1 tracking-wider uppercase flex items-center gap-2">
-                  <FileCode2 className="h-4 w-4" /> {t("shop_label_digital")}
-                </div>
-                <h3 className="text-2xl md:text-3xl font-bold">
-                  {lang === "bn" ? "ডিজিটাল প্রোডাক্ট" : "Digital Products"}
-                </h3>
-              </div>
-            </div>
-            <ProductSlider items={digital} idKey="digital" />
-          </div>
-        )}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {products.map((p) => (
+            <ProductCard key={p.id} p={p} />
+          ))}
+        </div>
       </div>
     </section>
   );
