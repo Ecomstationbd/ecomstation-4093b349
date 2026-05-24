@@ -25,6 +25,7 @@ export type Database = {
           customer_phone: string | null
           id: string
           notes: string | null
+          session_token: string | null
           subtotal: number
           updated_at: string
           user_id: string | null
@@ -39,6 +40,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          session_token?: string | null
           subtotal?: number
           updated_at?: string
           user_id?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           notes?: string | null
+          session_token?: string | null
           subtotal?: number
           updated_at?: string
           user_id?: string | null
