@@ -748,6 +748,22 @@ function TestimonialsAdmin() {
 function OrdersAdmin() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [items, setItems] = useState<Record<string, any[]>>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [bulkStatus, setBulkStatus] = useState<string>("");
+
+  const STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+  const statusTone: Record<string, string> = {
+    pending: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
+    confirmed: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+    shipped: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
+    delivered: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30",
+    cancelled: "bg-destructive/15 text-destructive border-destructive/30",
+  };
+
   const load = async () => {
     const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
     setOrders(data || []);
@@ -756,9 +772,28 @@ function OrdersAdmin() {
       const grouped: Record<string, any[]> = {};
       (oi || []).forEach((i: any) => { (grouped[i.order_id] ||= []).push(i); });
       setItems(grouped);
-    }
+    } else { setItems({}); }
+    setSelected(new Set());
   };
   useEffect(() => { load(); }, []);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const fromTs = dateFrom ? new Date(dateFrom).getTime() : 0;
+    const toTs = dateTo ? new Date(dateTo).getTime() + 86400000 : Infinity;
+    return orders.filter((o) => {
+      if (statusFilter !== "all" && o.status !== statusFilter) return false;
+      const t = new Date(o.created_at).getTime();
+      if (t < fromTs || t >= toTs) return false;
+      if (!q) return true;
+      const its = items[o.id] || [];
+      const hay = [
+        o.id, o.id.slice(0, 8), o.customer_name, o.customer_phone, o.customer_email,
+        ...its.map((i) => i.product_name), ...its.map((i) => i.product_id || ""),
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }, [orders, items, search, statusFilter, dateFrom, dateTo]);
 
   const setStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
@@ -771,40 +806,142 @@ function OrdersAdmin() {
     load();
   };
 
+  const toggleAll = () => {
+    if (selected.size === filtered.length) setSelected(new Set());
+    else setSelected(new Set(filtered.map((o) => o.id)));
+  };
+  const toggleOne = (id: string) => {
+    const n = new Set(selected);
+    n.has(id) ? n.delete(id) : n.add(id);
+    setSelected(n);
+  };
+  const bulkUpdate = async () => {
+    if (!bulkStatus || selected.size === 0) return toast.error("Pick status & orders");
+    const { error } = await supabase.from("orders").update({ status: bulkStatus }).in("id", Array.from(selected));
+    if (error) return toast.error(error.message);
+    toast.success(`Updated ${selected.size} orders`); load();
+  };
+  const bulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} orders?`)) return;
+    await supabase.from("orders").delete().in("id", Array.from(selected));
+    toast.success("Deleted"); load();
+  };
+
+  const exportCSV = () => {
+    const rows = filtered.length ? filtered : orders;
+    const head = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Delivery", "Total", "Status", "Notes"];
+    const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [head.join(",")].concat(rows.map((o) => {
+      const its = (items[o.id] || []).map((i) => `${i.product_name} x${i.quantity}`).join(" | ");
+      return [o.id.slice(0, 8).toUpperCase(), new Date(o.created_at).toLocaleString(), o.customer_name, o.customer_phone,
+        o.customer_email || "", o.customer_address || "", its, o.delivery_charge || 0, o.total, o.status, o.notes || ""].map(esc).join(",");
+    })).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast.success("CSV exported");
+  };
+
+  const statusCounts = useMemo(() => {
+    const c: Record<string, number> = { all: orders.length };
+    STATUSES.forEach((s) => c[s] = orders.filter((o) => o.status === s).length);
+    return c;
+  }, [orders]);
+
   return (
-    <div className="space-y-3">
-      <h2 className="text-xl font-bold">Orders ({orders.length})</h2>
-      {orders.map((o) => (
-        <div key={o.id} className="bg-card border border-border rounded-lg p-4 space-y-2">
-          <div className="flex justify-between items-start gap-2 flex-wrap">
-            <div>
-              <div className="font-semibold">{o.customer_name} • {o.customer_phone}</div>
-              <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</div>
-              {o.customer_email && <div className="text-xs">{o.customer_email}</div>}
-              {o.customer_address && <div className="text-xs text-muted-foreground">{o.customer_address}</div>}
-              {o.notes && <div className="text-xs italic">"{o.notes}"</div>}
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={o.status} onValueChange={(v) => setStatus(o.id, v)}>
-                <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {["pending", "confirmed", "shipped", "delivered", "cancelled"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Button size="icon" variant="ghost" className="text-destructive" onClick={() => del(o.id)}><Trash2 className="h-4 w-4" /></Button>
-            </div>
-          </div>
-          <div className="border-t border-border pt-2 text-sm">
-            {(items[o.id] || []).map((i) => (
-              <div key={i.id} className="flex justify-between"><span>{i.product_name} × {i.quantity}</span><span>৳{i.price * i.quantity}</span></div>
-            ))}
-            {Number(o.delivery_charge) > 0 && (
-              <div className="flex justify-between text-muted-foreground"><span>Delivery ({o.delivery_location === "inside" ? "Inside Dhaka" : "Outside Dhaka"})</span><span>৳{Number(o.delivery_charge)}</span></div>
-            )}
-            <div className="flex justify-between font-bold pt-1 border-t border-border mt-1"><span>Total</span><span className="gradient-text">৳{Number(o.total).toLocaleString()}</span></div>
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="text-xl font-bold">Orders ({filtered.length}<span className="text-sm text-muted-foreground font-normal">/{orders.length}</span>)</h2>
+        <Button size="sm" variant="outline" onClick={exportCSV}>Export CSV</Button>
+      </div>
+
+      {/* Status pills */}
+      <div className="flex gap-2 flex-wrap">
+        {(["all", ...STATUSES]).map((s) => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${statusFilter === s ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:border-primary/50"}`}>
+            {s} <span className="opacity-70">({statusCounts[s] || 0})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-card border border-border rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <Input placeholder="Search order no, phone, SKU, product..." value={search} onChange={(e) => setSearch(e.target.value)} className="lg:col-span-2" />
+        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+      </div>
+
+      {/* Bulk bar */}
+      {selected.size > 0 && (
+        <div className="sticky top-14 z-30 bg-primary/10 border border-primary/30 backdrop-blur-xl rounded-xl p-3 flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <Select value={bulkStatus} onValueChange={setBulkStatus}>
+            <SelectTrigger className="w-40 h-9"><SelectValue placeholder="Set status..." /></SelectTrigger>
+            <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+          </Select>
+          <Button size="sm" onClick={bulkUpdate}>Apply</Button>
+          <Button size="sm" variant="outline" onClick={() => setSelected(new Set())}>Clear</Button>
+          <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={bulkDelete}><Trash2 className="h-4 w-4 mr-1" />Delete</Button>
         </div>
-      ))}
+      )}
+
+      {/* Select all */}
+      {filtered.length > 0 && (
+        <label className="flex items-center gap-2 text-xs text-muted-foreground px-1 cursor-pointer">
+          <input type="checkbox" checked={selected.size === filtered.length && filtered.length > 0} onChange={toggleAll} className="h-4 w-4 accent-primary" />
+          Select all ({filtered.length})
+        </label>
+      )}
+
+      {filtered.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">No orders match filters.</div>
+      )}
+
+      {filtered.map((o) => {
+        const isSel = selected.has(o.id);
+        return (
+          <div key={o.id} className={`bg-card border rounded-lg p-4 space-y-2 transition-all ${isSel ? "border-primary shadow-glow" : "border-border"}`}>
+            <div className="flex justify-between items-start gap-2 flex-wrap">
+              <div className="flex items-start gap-3 min-w-0">
+                <input type="checkbox" checked={isSel} onChange={() => toggleOne(o.id)} className="h-4 w-4 mt-1 accent-primary shrink-0" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-muted">#{o.id.slice(0, 8).toUpperCase()}</span>
+                    <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full border ${statusTone[o.status] || "bg-muted"}`}>{o.status}</span>
+                  </div>
+                  <div className="font-semibold mt-1">{o.customer_name} • {o.customer_phone}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</div>
+                  {o.customer_email && <div className="text-xs">{o.customer_email}</div>}
+                  {o.customer_address && <div className="text-xs text-muted-foreground">{o.customer_address}</div>}
+                  {o.notes && <div className="text-xs italic">"{o.notes}"</div>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={o.status} onValueChange={(v) => setStatus(o.id, v)}>
+                  <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => del(o.id)}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            </div>
+            <div className="border-t border-border pt-2 text-sm">
+              {(items[o.id] || []).map((i) => (
+                <div key={i.id} className="flex justify-between"><span>{i.product_name} × {i.quantity}</span><span>৳{i.price * i.quantity}</span></div>
+              ))}
+              {Number(o.delivery_charge) > 0 && (
+                <div className="flex justify-between text-muted-foreground"><span>Delivery ({o.delivery_location === "inside" ? "Inside Dhaka" : "Outside Dhaka"})</span><span>৳{Number(o.delivery_charge)}</span></div>
+              )}
+              <div className="flex justify-between font-bold pt-1 border-t border-border mt-1"><span>Total</span><span className="gradient-text">৳{Number(o.total).toLocaleString()}</span></div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
