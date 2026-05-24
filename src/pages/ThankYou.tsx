@@ -157,12 +157,13 @@ export default function ThankYou() {
       }
 
       doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
+      setF(brand, "bold");
       doc.setFontSize(22);
       doc.text(brand, 40, 19);
-      doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
+      setF(settings.contact_address || "");
       doc.text(settings.contact_address || "", 40, 26);
+      setF("", "normal");
       doc.text(`${settings.contact_phone || ""}  •  ${settings.contact_email || ""}`, 40, 31);
 
       // INVOICE label
