@@ -10,9 +10,34 @@ import { Trash2, Minus, Plus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+
+// Per-visitor session token so only the visitor who started the abandoned
+// checkout row can update it (enforced by RLS via x-checkout-session header).
+const CHECKOUT_SESSION_KEY = "checkout_session_token";
+function getCheckoutSessionToken(): string {
+  try {
+    let t = localStorage.getItem(CHECKOUT_SESSION_KEY);
+    if (!t || t.length < 16) {
+      t = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
+      localStorage.setItem(CHECKOUT_SESSION_KEY, t);
+    }
+    return t;
+  } catch {
+    return crypto.randomUUID() + crypto.randomUUID().replace(/-/g, "");
+  }
+}
+function getAbandonedClient(token: string) {
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    { global: { headers: { "x-checkout-session": token } }, auth: { persistSession: false } }
+  );
+}
+
 
 const orderSchema = z.object({
   customer_name: z.string().trim().min(1).max(200),
@@ -49,6 +74,8 @@ export function CartDrawer() {
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
+      const token = getCheckoutSessionToken();
+      const client = getAbandonedClient(token);
       const payload = {
         customer_name: form.customer_name.trim() || null,
         customer_phone: form.customer_phone.trim() || null,
@@ -60,12 +87,13 @@ export function CartDrawer() {
         user_id: user?.id ?? null,
       };
       if (abandonedIdRef.current) {
-        await supabase.from("abandoned_checkouts").update(payload).eq("id", abandonedIdRef.current);
+        await client.from("abandoned_checkouts").update(payload).eq("id", abandonedIdRef.current);
       } else {
-        const { data } = await supabase.from("abandoned_checkouts").insert(payload).select("id").maybeSingle();
+        const { data } = await client.from("abandoned_checkouts").insert({ ...payload, session_token: token }).select("id").maybeSingle();
         if (data?.id) abandonedIdRef.current = data.id;
       }
     }, 1200);
+
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -111,9 +139,11 @@ export function CartDrawer() {
     if (e2) { toast.error(e2.message); setSubmitting(false); return; }
 
     if (abandonedIdRef.current) {
-      await supabase.from("abandoned_checkouts").update({ completed: true }).eq("id", abandonedIdRef.current);
+      const token = getCheckoutSessionToken();
+      await getAbandonedClient(token).from("abandoned_checkouts").update({ completed: true }).eq("id", abandonedIdRef.current);
       abandonedIdRef.current = null;
     }
+
 
     toast.success(bn ? "অর্ডার সফল হয়েছে!" : "Order placed!");
     clear();
