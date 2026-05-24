@@ -109,7 +109,7 @@ export default function AllProducts() {
                       <p className="text-xs text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {physical.map((p) => (
                       <ProductCard key={p.id} p={p} />
                     ))}
