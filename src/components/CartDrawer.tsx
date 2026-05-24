@@ -67,7 +67,7 @@ export function CartDrawer() {
 
     const lineItems = items.map((i) => ({
       order_id: orderId,
-      product_id: i.id,
+      product_id: i.id.split("::")[0],
       product_name: i.name,
       price: i.price,
       quantity: i.quantity,
