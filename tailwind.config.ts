@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Hind Siliguri', 'system-ui', 'sans-serif'],
-        bangla: ['Hind Siliguri', 'sans-serif'],
+        sans: ['BanglaDigits', 'Hind Siliguri', 'system-ui', 'sans-serif'],
+        bangla: ['BanglaDigits', 'Hind Siliguri', 'sans-serif'],
       },
       colors: {
         success: "hsl(var(--success))",
