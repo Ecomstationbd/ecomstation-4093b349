@@ -236,13 +236,14 @@ export default function ThankYou() {
         `BDT ${(Number(it.price) * it.quantity).toLocaleString()}`,
       ]);
 
+      const tableFont = bnReady && items.some(i => hasBengali(i.product_name)) ? "NotoBengali" : "helvetica";
       autoTable(doc, {
         startY: y + cardH + 8,
         head: [["#", "Item", "Qty", "Price", "Total"]],
         body: rows,
         theme: "grid",
-        headStyles: { fillColor: [pr, pg, pb], textColor: 255, fontStyle: "bold", halign: "left" },
-        bodyStyles: { textColor: [40, 40, 50], fontSize: 10 },
+        headStyles: { fillColor: [pr, pg, pb], textColor: 255, fontStyle: "bold", halign: "left", font: tableFont },
+        bodyStyles: { textColor: [40, 40, 50], fontSize: 10, font: tableFont },
         alternateRowStyles: { fillColor: [248, 250, 255] },
         columnStyles: {
           0: { cellWidth: 12, halign: "center" },
@@ -250,7 +251,7 @@ export default function ThankYou() {
           3: { cellWidth: 32, halign: "right" },
           4: { cellWidth: 34, halign: "right", fontStyle: "bold" },
         },
-        styles: { cellPadding: 3, lineColor: [230, 232, 240] },
+        styles: { cellPadding: 3, lineColor: [230, 232, 240], font: tableFont },
         margin: { left: 14, right: 14 },
       });
 
