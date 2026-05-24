@@ -20,6 +20,7 @@ import {
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import * as XLSX from "xlsx";
 import JsBarcode from "jsbarcode";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 type Service = any;
 type Product = any;
@@ -748,6 +749,7 @@ function TestimonialsAdmin() {
 
 /* ---------- Orders ---------- */
 function OrdersAdmin() {
+  const settings = useSiteSettings();
   const [orders, setOrders] = useState<Order[]>([]);
   const [items, setItems] = useState<Record<string, any[]>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -852,8 +854,21 @@ function OrdersAdmin() {
     ws["!cols"] = [{ wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 22 }, { wch: 28 }, { wch: 30 }, { wch: 9 }, { wch: 9 }, { wch: 11 }, { wch: 20 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Orders");
-    XLSX.writeFile(wb, `orders-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast.success("Excel exported");
+    try {
+      const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orders-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Excel exported");
+    } catch (e: any) {
+      toast.error("Export failed: " + (e?.message || ""));
+    }
   };
 
   const printInvoice = (o: any) => {
@@ -865,7 +880,10 @@ function OrdersAdmin() {
       JsBarcode(svgEl, orderNo, { format: "CODE128", width: 1.6, height: 40, displayValue: false, margin: 0 });
     } catch {}
     const barcodeSvg = new XMLSerializer().serializeToString(svgEl);
-    const brand = (window as any).__brandName || "Invoice";
+    const brand = settings.brand_name || "ECOMSTATION";
+    const logo = settings.logo_url || "";
+    const address = settings.contact_address || "";
+    const phone = settings.contact_phone || "";
     const itemsHtml = its.map((i: any) => `<tr><td>${i.product_name}<br/><span class="muted">x${i.quantity} @ ৳${Number(i.price)}</span></td><td class="r">৳${Number(i.price) * Number(i.quantity)}</td></tr>`).join("");
     const subtotal = its.reduce((s: number, i: any) => s + Number(i.price) * Number(i.quantity), 0);
     const html = `<!doctype html><html><head><meta charset="utf-8"/><title>Invoice ${orderNo}</title>
@@ -873,9 +891,10 @@ function OrdersAdmin() {
   @page { size: 3in 4in; margin: 0; }
   * { box-sizing: border-box; }
   body { width: 3in; margin: 0; padding: 6px 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #000; }
-  h1 { font-size: 13px; margin: 0; text-align: center; letter-spacing: 0.5px; }
+  h1 { font-size: 14px; margin: 2px 0; text-align: center; letter-spacing: 1px; font-weight: 900; }
+  .logo { display: block; margin: 0 auto 2px; max-height: 40px; max-width: 80%; object-fit: contain; }
   .center { text-align: center; }
-  .muted { color: #555; font-size: 9px; }
+  .muted { color: #333; font-size: 9px; }
   hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
   td { padding: 2px 0; vertical-align: top; }
@@ -885,8 +904,10 @@ function OrdersAdmin() {
   .barcode svg { width: 100%; height: 40px; }
   @media print { body { padding: 4px; } }
 </style></head><body>
+  ${logo ? `<img class="logo" src="${logo}" alt="${brand}"/>` : ""}
   <h1>${brand}</h1>
-  <div class="center muted">Invoice / Receipt</div>
+  <div class="center muted">${address}</div>
+  <div class="center muted">${phone ? "📞 " + phone : ""}</div>
   <hr/>
   <div class="row"><span>Order:</span><span><b>#${orderNo}</b></span></div>
   <div class="row"><span>Date:</span><span>${new Date(o.created_at).toLocaleString()}</span></div>
