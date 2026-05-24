@@ -139,9 +139,11 @@ export function CartDrawer() {
     if (e2) { toast.error(e2.message); setSubmitting(false); return; }
 
     if (abandonedIdRef.current) {
-      await supabase.from("abandoned_checkouts").update({ completed: true }).eq("id", abandonedIdRef.current);
+      const token = getCheckoutSessionToken();
+      await getAbandonedClient(token).from("abandoned_checkouts").update({ completed: true }).eq("id", abandonedIdRef.current);
       abandonedIdRef.current = null;
     }
+
 
     toast.success(bn ? "অর্ডার সফল হয়েছে!" : "Order placed!");
     clear();
