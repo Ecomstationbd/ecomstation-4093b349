@@ -17,6 +17,7 @@ type Product = {
   category: "physical" | "digital";
   badge: string | null;
   image_url: string | null;
+  is_physical?: boolean;
 };
 
 export function Shop() {
