@@ -8,24 +8,34 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useMenuItems } from "@/hooks/useMenuItems";
 import defaultLogo from "@/assets/ecomstation-logo.png";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { count, setOpen: setCartOpen } = useCart();
   const { isAdmin, user } = useAuth();
   const settings = useSiteSettings();
+  const { items: menuItems, loaded } = useMenuItems();
 
-  const links = [
-    { href: "/#services", label: t("nav_services") },
-    { href: "/#shop", label: t("nav_shop") },
-    { href: "/blog", label: t("nav_blog") },
-    { href: "/#why", label: t("nav_why") },
-    { href: "/#testimonials", label: t("nav_testimonials") },
-    { href: "/#contact", label: t("nav_contact") },
+  const fallbackLinks = [
+    { href: "/#services", label: t("nav_services"), external: false },
+    { href: "/#shop", label: t("nav_shop"), external: false },
+    { href: "/blog", label: t("nav_blog"), external: false },
+    { href: "/#why", label: t("nav_why"), external: false },
+    { href: "/#testimonials", label: t("nav_testimonials"), external: false },
+    { href: "/#contact", label: t("nav_contact"), external: false },
   ];
+
+  const links = loaded && menuItems.length > 0
+    ? menuItems.map((m) => ({
+        href: m.href,
+        label: lang === "bn" ? m.label_bn : m.label_en,
+        external: m.open_in_new_tab,
+      }))
+    : fallbackLinks;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -43,8 +53,8 @@ export function Navbar() {
         </a>
 
         <div className="hidden md:flex items-center gap-1">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth rounded-lg hover:bg-secondary/60">
+          {links.map((l, i) => (
+            <a key={`${l.href}-${i}`} href={l.href} target={l.external ? "_blank" : undefined} rel={l.external ? "noopener noreferrer" : undefined} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth rounded-lg hover:bg-secondary/60">
               {l.label}
             </a>
           ))}
@@ -88,8 +98,8 @@ export function Navbar() {
       {open && (
         <div className="md:hidden mt-2 rounded-2xl border border-border/40 bg-background/70 backdrop-blur-2xl shadow-elegant">
           <div className="py-3 px-2 flex flex-col gap-1">
-            {links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-lg hover:bg-secondary text-foreground">
+            {links.map((l, i) => (
+              <a key={`${l.href}-${i}`} href={l.href} target={l.external ? "_blank" : undefined} rel={l.external ? "noopener noreferrer" : undefined} onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-lg hover:bg-secondary text-foreground">
                 {l.label}
               </a>
             ))}
