@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Trash2, Edit, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Edit, Plus, ArrowUp, ArrowDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 type MenuItem = {
@@ -16,6 +17,7 @@ type MenuItem = {
   sort_order: number;
   is_active: boolean;
   open_in_new_tab: boolean;
+  parent_id: string | null;
 };
 
 const empty: Omit<MenuItem, "id"> = {
@@ -25,7 +27,10 @@ const empty: Omit<MenuItem, "id"> = {
   sort_order: 0,
   is_active: true,
   open_in_new_tab: false,
+  parent_id: null,
 };
+
+const NONE = "__none__";
 
 export function MenusAdmin() {
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -45,9 +50,9 @@ export function MenusAdmin() {
 
   useEffect(() => { load(); }, []);
 
-  const openNew = () => {
+  const openNew = (parent_id: string | null = null) => {
     setEditing(null);
-    setForm({ ...empty, sort_order: (items[items.length - 1]?.sort_order ?? 0) + 1 });
+    setForm({ ...empty, parent_id, sort_order: (items[items.length - 1]?.sort_order ?? 0) + 1 });
     setOpen(true);
   };
 
@@ -75,7 +80,7 @@ export function MenusAdmin() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Delete this menu item?")) return;
+    if (!confirm("Delete this menu item? Sub-items গুলোও delete হবে।")) return;
     const { error } = await supabase.from("menu_items").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Deleted");
@@ -83,9 +88,11 @@ export function MenusAdmin() {
   };
 
   const move = async (it: MenuItem, dir: -1 | 1) => {
-    const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order);
-    const idx = sorted.findIndex((x) => x.id === it.id);
-    const swap = sorted[idx + dir];
+    const siblings = items
+      .filter((x) => (x.parent_id ?? null) === (it.parent_id ?? null))
+      .sort((a, b) => a.sort_order - b.sort_order);
+    const idx = siblings.findIndex((x) => x.id === it.id);
+    const swap = siblings[idx + dir];
     if (!swap) return;
     await supabase.from("menu_items").update({ sort_order: swap.sort_order }).eq("id", it.id);
     await supabase.from("menu_items").update({ sort_order: it.sort_order }).eq("id", swap.id);
@@ -97,16 +104,52 @@ export function MenusAdmin() {
     load();
   };
 
+  const roots = items.filter((x) => !x.parent_id).sort((a, b) => a.sort_order - b.sort_order);
+  const childrenOf = (pid: string) =>
+    items.filter((x) => x.parent_id === pid).sort((a, b) => a.sort_order - b.sort_order);
+
+  // Possible parent options when editing/creating (exclude self & items that already have a parent — max 2 levels)
+  const parentOptions = items.filter((x) => !x.parent_id && (!editing || x.id !== editing.id));
+
+  const renderRow = (it: MenuItem, idx: number, total: number, depth = 0) => (
+    <div key={it.id}>
+      <div className="p-3 flex items-center gap-3" style={{ paddingLeft: 12 + depth * 24 }}>
+        {depth > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
+        <div className="flex flex-col gap-1">
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => move(it, -1)} disabled={idx === 0}>
+            <ArrowUp className="h-3 w-3" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => move(it, 1)} disabled={idx === total - 1}>
+            <ArrowDown className="h-3 w-3" />
+          </Button>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium truncate">{it.label_en} <span className="text-muted-foreground">/ {it.label_bn}</span></div>
+          <div className="text-xs text-muted-foreground truncate">{it.href} {it.open_in_new_tab && "↗"}</div>
+        </div>
+        {depth === 0 && (
+          <Button size="sm" variant="outline" onClick={() => openNew(it.id)}>
+            <Plus className="h-3 w-3 mr-1" />Sub
+          </Button>
+        )}
+        <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} />
+        <Button size="icon" variant="ghost" onClick={() => openEdit(it)}><Edit className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+      </div>
+      {depth === 0 && childrenOf(it.id).map((c, i, arr) => renderRow(c, i, arr.length, 1))}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Header Menu</h2>
-          <p className="text-sm text-muted-foreground">Header navigation links manage করুন</p>
+          <p className="text-sm text-muted-foreground">Header navigation links এবং sub-menu manage করুন</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" />Add Menu Item</Button>
+            <Button onClick={() => openNew(null)}><Plus className="h-4 w-4 mr-1" />Add Menu Item</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -131,8 +174,23 @@ export function MenusAdmin() {
                   onChange={(e) => setForm({ ...form, href: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Internal: <code>/blog</code>, anchor: <code>/#shop</code>, external: <code>https://...</code>
+                  Parent এ # দিতে পারেন যদি শুধু dropdown trigger চান
                 </p>
+              </div>
+              <div>
+                <Label>Parent Menu (sub-menu হিসেবে রাখতে)</Label>
+                <Select
+                  value={form.parent_id ?? NONE}
+                  onValueChange={(v) => setForm({ ...form, parent_id: v === NONE ? null : v })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>— None (top-level) —</SelectItem>
+                    {parentOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.label_en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-3 gap-3 items-end">
                 <div>
@@ -155,28 +213,10 @@ export function MenusAdmin() {
       </div>
 
       <div className="rounded-xl border border-border/60 divide-y">
-        {items.length === 0 && (
+        {roots.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground">এখনো কোন menu item নেই</div>
         )}
-        {items.map((it, idx) => (
-          <div key={it.id} className="p-3 flex items-center gap-3">
-            <div className="flex flex-col gap-1">
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => move(it, -1)} disabled={idx === 0}>
-                <ArrowUp className="h-3 w-3" />
-              </Button>
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => move(it, 1)} disabled={idx === items.length - 1}>
-                <ArrowDown className="h-3 w-3" />
-              </Button>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium truncate">{it.label_en} <span className="text-muted-foreground">/ {it.label_bn}</span></div>
-              <div className="text-xs text-muted-foreground truncate">{it.href} {it.open_in_new_tab && "↗"}</div>
-            </div>
-            <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} />
-            <Button size="icon" variant="ghost" onClick={() => openEdit(it)}><Edit className="h-4 w-4" /></Button>
-            <Button size="icon" variant="ghost" onClick={() => remove(it.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-          </div>
-        ))}
+        {roots.map((it, idx) => renderRow(it, idx, roots.length, 0))}
       </div>
     </div>
   );
