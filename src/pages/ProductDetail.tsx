@@ -71,8 +71,52 @@ export default function ProductDetail() {
     setOpen(true);
   };
 
+  const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://ecomstation.lovable.app";
+  const canonicalUrl = `${siteOrigin}/product/${product.slug}`;
+  const seoTitle = (product.meta_title && product.meta_title.trim()) || `${name} — ৳${price.toLocaleString()} | Ecomstation`;
+  const plainDesc = (desc || "").replace(/\s+/g, " ").trim().slice(0, 160);
+  const seoDesc = (product.meta_description && product.meta_description.trim()) || plainDesc || `${name} — best price in Bangladesh. Order online from Ecomstation.`;
+  const ogImage = product.og_image_url || images[0] || `${siteOrigin}/placeholder.svg`;
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name,
+    description: seoDesc,
+    image: images.length ? images : undefined,
+    sku: product.id,
+    category: product.category,
+    brand: { "@type": "Brand", name: "Ecomstation" },
+    offers: {
+      "@type": "Offer",
+      url: canonicalUrl,
+      priceCurrency: "BDT",
+      price: price,
+      availability: (product.stock == null || product.stock > 0)
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDesc} />
+        {product.meta_keywords && <meta name="keywords" content={product.meta_keywords} />}
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDesc} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="product:price:amount" content={String(price)} />
+        <meta property="product:price:currency" content="BDT" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDesc} />
+        <meta name="twitter:image" content={ogImage} />
+        <script type="application/ld+json">{JSON.stringify(productSchema)}</script>
+      </Helmet>
       <Navbar />
       <main className="pt-24 pb-16">
         <div className="container">
