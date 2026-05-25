@@ -53,12 +53,18 @@ export default function Auth() {
     if (!parsed.success) { toast.error(bn ? "সঠিক ইমেইল ও পাসওয়ার্ড দিন (৬+)" : "Valid email & password (6+) required"); return; }
     setBusy(true);
     if (mode === "signup") {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email, password,
         options: { emailRedirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) toast.error(error.message);
-      else toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে! ইমেইল ভেরিফাই করে লগইন করুন।" : "Account created! Verify your email and sign in.");
+      else {
+        toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে!" : "Account created!");
+        if (!data.session) {
+          // fallback: auto sign in if session not returned
+          await supabase.auth.signInWithPassword({ email, password });
+        }
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) toast.error(error.message);
