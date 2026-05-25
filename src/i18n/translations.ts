@@ -6,6 +6,7 @@ export const translations = {
     nav_why: "কেন আমরা",
     nav_testimonials: "রিভিউ",
     nav_contact: "যোগাযোগ",
+    nav_blog: "ব্লগ",
     nav_cta: "ফ্রি কনসালটেন্সি",
 
     // Hero
@@ -120,6 +121,7 @@ export const translations = {
     nav_why: "Why Us",
     nav_testimonials: "Reviews",
     nav_contact: "Contact",
+    nav_blog: "Blog",
     nav_cta: "Free Consultancy",
 
     hero_badge: "Bangladesh's #1 E-commerce Growth Partner",
