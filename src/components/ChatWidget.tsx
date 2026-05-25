@@ -40,6 +40,21 @@ export function ChatWidget() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
+  // Show welcome popup after 10s on home, hide after 5s
+  useEffect(() => {
+    if (!enabled || popupDismissed || open) return;
+    if (typeof window === "undefined" || window.location.pathname !== "/") return;
+    const showT = setTimeout(() => {
+      setShowPopup(true);
+      const hideT = setTimeout(() => setShowPopup(false), 5000);
+      (showT as any)._hide = hideT;
+    }, 10000);
+    return () => {
+      clearTimeout(showT);
+      if ((showT as any)._hide) clearTimeout((showT as any)._hide);
+    };
+  }, [enabled, popupDismissed, open]);
+
   // Lock body scroll on mobile when open
   useEffect(() => {
     if (!open) return;
