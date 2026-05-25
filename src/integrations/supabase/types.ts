@@ -358,6 +358,7 @@ export type Database = {
           label_bn: string
           label_en: string
           open_in_new_tab: boolean
+          parent_id: string | null
           sort_order: number
           updated_at: string
         }
@@ -369,6 +370,7 @@ export type Database = {
           label_bn: string
           label_en: string
           open_in_new_tab?: boolean
+          parent_id?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -380,10 +382,19 @@ export type Database = {
           label_bn?: string
           label_en?: string
           open_in_new_tab?: boolean
+          parent_id?: string | null
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
