@@ -29,6 +29,7 @@ type Order = any;
 type Contact = any;
 
 import { PagesAdmin } from "@/components/admin/PagesAdmin";
+import { CombosAdmin } from "@/components/admin/CombosAdmin";
 
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { value: "services", label: "Services", icon: Wrench },
   { value: "categories", label: "Categories", icon: FolderTree },
   { value: "products", label: "Products", icon: Package },
+  { value: "combos", label: "Combos", icon: Package },
   { value: "blogs", label: "Blog", icon: FileText },
   { value: "pages", label: "Pages", icon: FileText },
   { value: "testimonials", label: "Reviews", icon: MessageSquare },
