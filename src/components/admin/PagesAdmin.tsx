@@ -26,7 +26,7 @@ type PageRow = {
 };
 
 const RESERVED = new Set([
-  "admin","auth","dashboard","product","category","service","physical-products",
+  "admin","auth","dashboard","product","combo","category","service","physical-products",
   "blog","thank-you","cart","checkout","api","assets",""
 ]);
 

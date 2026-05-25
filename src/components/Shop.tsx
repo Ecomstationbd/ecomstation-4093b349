@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShoppingCart, Package2, FileCode2, ArrowRight } from "lucide-react";
+import { ShoppingCart, Package2, FileCode2, ArrowRight, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -65,11 +65,14 @@ function ProductCard({ p }: { p: Product }) {
 
 export function Shop() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [combos, setCombos] = useState<any[]>([]);
   const { lang, t } = useLanguage();
 
   useEffect(() => {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order")
       .then(({ data }) => setProducts((data as Product[]) || []));
+    supabase.from("combos").select("*").eq("is_active", true).order("sort_order")
+      .then(({ data }) => setCombos(data || []));
   }, []);
 
   const physical = products.filter((p) => p.category === "physical");
@@ -85,6 +88,52 @@ export function Shop() {
           </h2>
           <p className="text-muted-foreground text-lg">{t("shop_desc")}</p>
         </div>
+
+        {/* Combo Packages Section */}
+        {combos.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Layers className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold">{lang === "bn" ? "কম্বো প্যাকেজ" : "Combo Packages"}</h3>
+                <p className="text-[10px] text-muted-foreground">{lang === "bn" ? "একসাথে কিনুন, বেশি সাশ্রয় করুন" : "Bundle and save more"}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {combos.map((c) => {
+                const name = lang === "bn" ? c.name_bn : c.name_en;
+                return (
+                  <Link key={c.id} to={`/combo/${c.slug}`} className="group relative bg-card border border-border/60 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-elegant transition-smooth hover:-translate-y-1 flex flex-col">
+                    <div className="aspect-[4/3] bg-gradient-hero flex items-center justify-center relative overflow-hidden">
+                      {c.image_url ? (
+                        <img src={c.image_url} alt={name} className="h-full w-full object-cover group-hover:scale-105 transition-smooth" />
+                      ) : (
+                        <Layers className="h-10 w-10 text-primary/70" />
+                      )}
+                      <span className="absolute top-1.5 left-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-accent text-accent-foreground uppercase tracking-wider shadow-soft">COMBO</span>
+                      {c.badge && (
+                        <span className="absolute top-1.5 right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground uppercase">{c.badge}</span>
+                      )}
+                    </div>
+                    <div className="p-2.5 flex flex-col flex-1">
+                      <h3 className="font-semibold mb-1 line-clamp-2 min-h-[2rem] text-xs text-center group-hover:text-primary transition-smooth">{name}</h3>
+                      <div className="flex items-baseline justify-center gap-1.5 mb-2">
+                        <span className="text-base font-bold gradient-text">৳{Number(c.price).toLocaleString()}</span>
+                        {c.old_price && <span className="text-[10px] text-muted-foreground line-through">৳{Number(c.old_price).toLocaleString()}</span>}
+                      </div>
+                      <Button variant="hero" size="sm" className="w-full text-xs h-8 mt-auto">
+                        {lang === "bn" ? "ডিটেইলস দেখুন" : "View Combo"} <ArrowRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
 
         {/* Physical Products Section */}
         {physical.length > 0 && (

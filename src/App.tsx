@@ -22,6 +22,7 @@ import AllProducts from "./pages/AllProducts.tsx";
 import Blog from "./pages/Blog.tsx";
 import BlogPost from "./pages/BlogPost.tsx";
 import CustomPage from "./pages/CustomPage.tsx";
+import ComboDetail from "./pages/ComboDetail.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/product/:slug" element={<ProductDetail />} />
+                  <Route path="/combo/:slug" element={<ComboDetail />} />
                   <Route path="/category/:slug" element={<CategoryPage />} />
                   <Route path="/service/:slug" element={<ServiceDetail />} />
                   <Route path="/physical-products" element={<AllProducts />} />
