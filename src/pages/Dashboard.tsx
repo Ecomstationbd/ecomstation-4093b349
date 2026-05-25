@@ -141,6 +141,22 @@ export default function Dashboard() {
                 <div>
                   <Label>Email</Label>
                   <Input value={user.email || ""} disabled />
+                  {!user.email_confirmed_at && (
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs">
+                      <span>{bn ? "ইমেইল ভেরিফাই করা হয়নি" : "Email not verified"}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          const { error } = await supabase.auth.resend({ type: "signup", email: user.email! });
+                          if (error) toast.error(error.message);
+                          else toast.success(bn ? "ভেরিফিকেশন লিংক পাঠানো হয়েছে" : "Verification link sent");
+                        }}
+                      >
+                        {bn ? "ভেরিফাই করুন" : "Verify now"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label>{bn ? "নাম" : "Name"}</Label>
