@@ -137,10 +137,20 @@ export default function ThankYou() {
     window.scrollTo(0, 1);
     if (!orderId) return;
     (async () => {
+      // Try direct read first (works for admins / order owners), then fall back
+      // to a public edge function so guest checkouts can still load their invoice.
       const { data: o } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
-      if (o) setOrder(o as OrderRow);
-      const { data: it } = await supabase.from("order_items").select("product_name,price,quantity").eq("order_id", orderId);
-      if (it) setItems(it as ItemRow[]);
+      if (o) {
+        setOrder(o as OrderRow);
+        const { data: it } = await supabase.from("order_items").select("product_name,price,quantity").eq("order_id", orderId);
+        if (it) setItems(it as ItemRow[]);
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("get-order", { body: { order_id: orderId } });
+      if (!error && data?.order) {
+        setOrder(data.order as OrderRow);
+        setItems((data.items || []) as ItemRow[]);
+      }
     })();
   }, [orderId]);
 
