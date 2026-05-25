@@ -20,7 +20,7 @@ export default function Auth() {
   const nav = useNavigate();
   const { lang } = useLanguage();
   const bn = lang === "bn";
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,6 +37,18 @@ export default function Auth() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "forgot") {
+      const okEmail = z.string().email().max(255).safeParse(email).success;
+      if (!okEmail) { toast.error(bn ? "সঠিক ইমেইল দিন" : "Enter a valid email"); return; }
+      setBusy(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setBusy(false);
+      if (error) toast.error(error.message);
+      else toast.success(bn ? "রিসেট লিংক পাঠানো হয়েছে। ইমেইল চেক করুন।" : "Reset link sent. Check your inbox.");
+      return;
+    }
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) { toast.error(bn ? "সঠিক ইমেইল ও পাসওয়ার্ড দিন (৬+)" : "Valid email & password (6+) required"); return; }
     setBusy(true);
@@ -46,7 +58,7 @@ export default function Auth() {
         options: { emailRedirectTo: `${window.location.origin}/dashboard` },
       });
       if (error) toast.error(error.message);
-      else toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে! লগইন করুন।" : "Account created! Sign in.");
+      else toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে! ইমেইল ভেরিফাই করে লগইন করুন।" : "Account created! Verify your email and sign in.");
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) toast.error(error.message);
@@ -59,31 +71,61 @@ export default function Auth() {
     if (r.error) toast.error("Google sign in failed");
   };
 
+  const title =
+    mode === "login" ? (bn ? "লগইন" : "Login")
+    : mode === "signup" ? (bn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account")
+    : (bn ? "পাসওয়ার্ড রিসেট" : "Reset Password");
+  const subtitle =
+    mode === "login" ? (bn ? "আপনার অ্যাকাউন্টে সাইন ইন করুন" : "Sign in to your account")
+    : mode === "signup" ? (bn ? "নতুন কাস্টমার অ্যাকাউন্ট তৈরি করুন" : "Create a new customer account")
+    : (bn ? "আপনার ইমেইলে রিসেট লিংক পাঠানো হবে" : "We'll email you a reset link");
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-elegant p-8">
-        <h1 className="text-2xl font-bold mb-1 gradient-text">
-          {mode === "login" ? (bn ? "লগইন" : "Login") : (bn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account")}
-        </h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          {mode === "login"
-            ? bn ? "আপনার অ্যাকাউন্টে সাইন ইন করুন" : "Sign in to your account"
-            : bn ? "নতুন কাস্টমার অ্যাকাউন্ট তৈরি করুন" : "Create a new customer account"}
-        </p>
+        <h1 className="text-2xl font-bold mb-1 gradient-text">{title}</h1>
+        <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
         <form onSubmit={submit} className="space-y-4">
           <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-          <div><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+          {mode !== "forgot" && (
+            <div>
+              <div className="flex items-center justify-between">
+                <Label>Password</Label>
+                {mode === "login" && (
+                  <button type="button" onClick={() => setMode("forgot")} className="text-xs text-primary hover:underline">
+                    {bn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot password?"}
+                  </button>
+                )}
+              </div>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+          )}
           <Button type="submit" variant="hero" className="w-full" disabled={busy}>
-            {busy ? "..." : mode === "login" ? (bn ? "লগইন" : "Sign In") : (bn ? "সাইন আপ" : "Sign Up")}
+            {busy ? "..."
+              : mode === "login" ? (bn ? "লগইন" : "Sign In")
+              : mode === "signup" ? (bn ? "সাইন আপ" : "Sign Up")
+              : (bn ? "রিসেট লিংক পাঠান" : "Send reset link")}
           </Button>
         </form>
-        <div className="my-4 flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="flex-1 h-px bg-border" /> OR <div className="flex-1 h-px bg-border" />
+        {mode !== "forgot" && (
+          <>
+            <div className="my-4 flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex-1 h-px bg-border" /> OR <div className="flex-1 h-px bg-border" />
+            </div>
+            <Button variant="outline" className="w-full" onClick={google}>Continue with Google</Button>
+          </>
+        )}
+        <div className="mt-4 text-center">
+          {mode === "forgot" ? (
+            <button onClick={() => setMode("login")} className="text-sm text-primary hover:underline">
+              {bn ? "← লগইনে ফিরে যান" : "← Back to sign in"}
+            </button>
+          ) : (
+            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="text-sm text-primary hover:underline">
+              {mode === "login" ? (bn ? "অ্যাকাউন্ট নেই? সাইন আপ" : "No account? Sign up") : (bn ? "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন" : "Have an account? Sign in")}
+            </button>
+          )}
         </div>
-        <Button variant="outline" className="w-full" onClick={google}>Continue with Google</Button>
-        <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="w-full text-sm text-primary mt-4 hover:underline">
-          {mode === "login" ? (bn ? "অ্যাকাউন্ট নেই? সাইন আপ" : "No account? Sign up") : (bn ? "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন" : "Have an account? Sign in")}
-        </button>
       </div>
     </div>
   );

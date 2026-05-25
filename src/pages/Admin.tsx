@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet, FileText, Eye, Bold, Italic, Heading2, Link as LinkIcon, List, Image as ImageIcon, Code, Menu as MenuIcon, Handshake } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet, FileText, Eye, Bold, Italic, Heading2, Link as LinkIcon, List, Image as ImageIcon, Code, Menu as MenuIcon, Handshake, Users } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -32,10 +32,12 @@ import { PagesAdmin } from "@/components/admin/PagesAdmin";
 import { CombosAdmin } from "@/components/admin/CombosAdmin";
 import { MenusAdmin } from "@/components/admin/MenusAdmin";
 import { PartnersAdmin } from "@/components/admin/PartnersAdmin";
+import { CustomersAdmin } from "@/components/admin/CustomersAdmin";
 
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "orders", label: "Orders", icon: ShoppingBag },
+  { value: "customers", label: "Customers", icon: Users },
   { value: "services", label: "Services", icon: Wrench },
   { value: "categories", label: "Categories", icon: FolderTree },
   { value: "products", label: "Products", icon: Package },
@@ -168,6 +170,7 @@ export default function Admin() {
             {active === "menus" && <MenusAdmin />}
             {active === "partners" && <PartnersAdmin />}
             {active === "orders" && <OrdersAdmin />}
+            {active === "customers" && <CustomersAdmin />}
             {active === "contacts" && <ContactsAdmin />}
             {active === "chatbot" && <ChatbotAdmin />}
             {active === "settings" && <SettingsAdmin />}
