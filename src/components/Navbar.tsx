@@ -53,8 +53,8 @@ export function Navbar() {
         </a>
 
         <div className="hidden md:flex items-center gap-1">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth rounded-lg hover:bg-secondary/60">
+          {links.map((l, i) => (
+            <a key={`${l.href}-${i}`} href={l.href} target={l.external ? "_blank" : undefined} rel={l.external ? "noopener noreferrer" : undefined} className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth rounded-lg hover:bg-secondary/60">
               {l.label}
             </a>
           ))}
@@ -98,8 +98,8 @@ export function Navbar() {
       {open && (
         <div className="md:hidden mt-2 rounded-2xl border border-border/40 bg-background/70 backdrop-blur-2xl shadow-elegant">
           <div className="py-3 px-2 flex flex-col gap-1">
-            {links.map((l) => (
-              <a key={l.href} href={l.href} onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-lg hover:bg-secondary text-foreground">
+            {links.map((l, i) => (
+              <a key={`${l.href}-${i}`} href={l.href} target={l.external ? "_blank" : undefined} rel={l.external ? "noopener noreferrer" : undefined} onClick={() => setOpen(false)} className="px-3 py-2.5 rounded-lg hover:bg-secondary text-foreground">
                 {l.label}
               </a>
             ))}
