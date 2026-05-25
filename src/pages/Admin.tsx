@@ -157,6 +157,7 @@ export default function Admin() {
             {active === "products" && <ProductsAdmin />}
             {active === "testimonials" && <TestimonialsAdmin />}
             {active === "blogs" && <BlogsAdmin />}
+            {active === "pages" && <PagesAdmin />}
             {active === "orders" && <OrdersAdmin />}
             {active === "contacts" && <ContactsAdmin />}
             {active === "chatbot" && <ChatbotAdmin />}
