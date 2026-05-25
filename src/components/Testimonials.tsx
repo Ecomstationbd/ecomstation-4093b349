@@ -74,7 +74,7 @@ export function Testimonials() {
   }, [reviews]);
 
   return (
-    <section id="testimonials" className="py-24 bg-secondary/30">
+    <section id="testimonials" className="py-16 bg-secondary/30">
       <div className="container">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="text-sm font-semibold text-primary mb-3 tracking-wider uppercase">{t("test_eyebrow")}</div>

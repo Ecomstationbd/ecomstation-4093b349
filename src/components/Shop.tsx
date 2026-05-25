@@ -76,7 +76,7 @@ export function Shop() {
   const digital = products.filter((p) => p.category === "digital");
 
   return (
-    <section id="shop" className="py-24 relative bg-secondary/30">
+    <section id="shop" className="py-16 relative bg-secondary/30">
       <div className="container">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <div className="text-sm font-semibold text-primary mb-3 tracking-wider uppercase">{t("shop_eyebrow")}</div>
