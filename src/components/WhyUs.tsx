@@ -14,7 +14,7 @@ const items: { icon: typeof MapPin; tKey: TranslationKey; dKey: TranslationKey }
 export function WhyUs() {
   const { t } = useLanguage();
   return (
-    <section id="why" className="py-24 relative">
+    <section id="why" className="py-16 relative">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className="lg:sticky lg:top-24">

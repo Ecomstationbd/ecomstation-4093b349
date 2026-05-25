@@ -11,7 +11,7 @@ export function CTA() {
   const waUrl = wa ? `https://wa.me/${wa}` : "#contact";
   const bn = lang === "bn";
   return (
-    <section id="contact" className="py-24">
+    <section id="contact" className="py-16">
       <div className="container space-y-12">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-primary p-10 md:p-16 text-center shadow-elegant">
           <div className="absolute inset-0 grid-pattern opacity-20" />

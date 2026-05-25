@@ -26,7 +26,7 @@ export function Services() {
   }, []);
 
   return (
-    <section id="services" className="py-24 relative">
+    <section id="services" className="py-16 relative">
       <div className="container">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="text-sm font-semibold text-primary mb-3 tracking-wider uppercase">{t("services_eyebrow")}</div>
