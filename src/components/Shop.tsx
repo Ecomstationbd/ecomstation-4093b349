@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShoppingCart, Package2, FileCode2, ArrowRight } from "lucide-react";
+import { ShoppingCart, Package2, FileCode2, ArrowRight, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
