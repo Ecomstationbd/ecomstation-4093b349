@@ -160,6 +160,7 @@ export default function Admin() {
             {active === "testimonials" && <TestimonialsAdmin />}
             {active === "blogs" && <BlogsAdmin />}
             {active === "pages" && <PagesAdmin />}
+            {active === "combos" && <CombosAdmin />}
             {active === "orders" && <OrdersAdmin />}
             {active === "contacts" && <ContactsAdmin />}
             {active === "chatbot" && <ChatbotAdmin />}
