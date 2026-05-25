@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet, FileText, Eye, Bold, Italic, Heading2, Link as LinkIcon, List, Image as ImageIcon, Code, Menu as MenuIcon } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet, FileText, Eye, Bold, Italic, Heading2, Link as LinkIcon, List, Image as ImageIcon, Code, Menu as MenuIcon, Handshake } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -31,6 +31,7 @@ type Contact = any;
 import { PagesAdmin } from "@/components/admin/PagesAdmin";
 import { CombosAdmin } from "@/components/admin/CombosAdmin";
 import { MenusAdmin } from "@/components/admin/MenusAdmin";
+import { PartnersAdmin } from "@/components/admin/PartnersAdmin";
 
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -42,6 +43,7 @@ const NAV_ITEMS = [
   { value: "blogs", label: "Blog", icon: FileText },
   { value: "pages", label: "Pages", icon: FileText },
   { value: "menus", label: "Header Menu", icon: MenuIcon },
+  { value: "partners", label: "Partners", icon: Handshake },
   { value: "testimonials", label: "Reviews", icon: MessageSquare },
   { value: "contacts", label: "Messages", icon: Mail },
   { value: "chatbot", label: "Chatbot", icon: Bot },
@@ -164,6 +166,7 @@ export default function Admin() {
             {active === "pages" && <PagesAdmin />}
             {active === "combos" && <CombosAdmin />}
             {active === "menus" && <MenusAdmin />}
+            {active === "partners" && <PartnersAdmin />}
             {active === "orders" && <OrdersAdmin />}
             {active === "contacts" && <ContactsAdmin />}
             {active === "chatbot" && <ChatbotAdmin />}

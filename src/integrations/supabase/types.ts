@@ -700,6 +700,42 @@ export type Database = {
         }
         Relationships: []
       }
+      service_partners: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          link_url: string | null
+          logo_url: string | null
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_url?: string | null
+          logo_url?: string | null
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          link_url?: string | null
+          logo_url?: string | null
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           badge: string | null
