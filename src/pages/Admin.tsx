@@ -592,6 +592,29 @@ function ProductsAdmin() {
               </div>
               <div><Label>Gallery (one URL per line)</Label><Textarea rows={3} value={galleryStr} onChange={(e) => setEditing({ ...editing, gallery: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} /></div>
 
+              <div className="border-t border-border pt-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">SEO Optimisation</Label>
+                  <span className="text-xs text-muted-foreground">Google & Social preview</span>
+                </div>
+                <div>
+                  <Label>Meta Title <span className="text-xs text-muted-foreground">({(editing.meta_title || "").length}/60)</span></Label>
+                  <Input maxLength={70} value={editing.meta_title || ""} onChange={(e) => setEditing({ ...editing, meta_title: e.target.value })} placeholder={editing.name_en || "Best price in Bangladesh"} />
+                </div>
+                <div>
+                  <Label>Meta Description <span className="text-xs text-muted-foreground">({(editing.meta_description || "").length}/160)</span></Label>
+                  <Textarea rows={2} maxLength={200} value={editing.meta_description || ""} onChange={(e) => setEditing({ ...editing, meta_description: e.target.value })} placeholder="Short 150-160 char description shown in Google results" />
+                </div>
+                <div>
+                  <Label>Keywords <span className="text-xs text-muted-foreground">(comma separated)</span></Label>
+                  <Input value={editing.meta_keywords || ""} onChange={(e) => setEditing({ ...editing, meta_keywords: e.target.value })} placeholder="thermal printer, pos printer, bangladesh" />
+                </div>
+                <div>
+                  <Label>OG / Social Image URL <span className="text-xs text-muted-foreground">(optional, 1200×630)</span></Label>
+                  <Input value={editing.og_image_url || ""} onChange={(e) => setEditing({ ...editing, og_image_url: e.target.value })} placeholder="Defaults to main image" />
+                </div>
+              </div>
+
               <div className="border-t border-border pt-3">
                 <div className="flex items-center justify-between mb-2">
                   <Label>Variants</Label>

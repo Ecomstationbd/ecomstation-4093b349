@@ -550,8 +550,12 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           is_physical: boolean
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
           name_bn: string
           name_en: string
+          og_image_url: string | null
           old_price: number | null
           price: number
           slug: string
@@ -571,8 +575,12 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_physical?: boolean
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name_bn: string
           name_en: string
+          og_image_url?: string | null
           old_price?: number | null
           price: number
           slug: string
@@ -592,8 +600,12 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_physical?: boolean
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
           name_bn?: string
           name_en?: string
+          og_image_url?: string | null
           old_price?: number | null
           price?: number
           slug?: string
