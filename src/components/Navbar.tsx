@@ -19,11 +19,12 @@ export function Navbar() {
   const settings = useSiteSettings();
 
   const links = [
-    { href: "#services", label: t("nav_services") },
-    { href: "#shop", label: t("nav_shop") },
-    { href: "#why", label: t("nav_why") },
-    { href: "#testimonials", label: t("nav_testimonials") },
-    { href: "#contact", label: t("nav_contact") },
+    { href: "/#services", label: t("nav_services") },
+    { href: "/#shop", label: t("nav_shop") },
+    { href: "/blog", label: t("nav_blog") },
+    { href: "/#why", label: t("nav_why") },
+    { href: "/#testimonials", label: t("nav_testimonials") },
+    { href: "/#contact", label: t("nav_contact") },
   ];
 
   useEffect(() => {
