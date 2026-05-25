@@ -118,18 +118,31 @@ export function ChatWidget() {
   return (
     <>
       {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-24 md:bottom-6 right-4 sm:right-6 z-50 h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-gradient-primary text-primary-foreground shadow-glow flex items-center justify-center hover:scale-110 active:scale-95 transition-smooth animate-glow-pulse group"
-          aria-label="Open chat"
-          style={{ marginBottom: "env(safe-area-inset-bottom)" }}
-        >
-          <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-background animate-pulse" />
-          <span className="absolute right-full mr-3 hidden sm:block whitespace-nowrap px-3 py-1.5 rounded-full bg-card text-foreground text-xs font-medium shadow-elegant border border-border/60 opacity-0 group-hover:opacity-100 transition-smooth pointer-events-none">
-            {lang === "bn" ? "যেকোনো প্রশ্ন? চ্যাট করুন!" : "Need help? Chat with us!"}
-          </span>
-        </button>
+        <div className="fixed bottom-24 md:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-2" style={{ marginBottom: "env(safe-area-inset-bottom)" }}>
+          {showPopup && (
+            <div className="relative max-w-[16rem] rounded-2xl bg-card text-foreground border border-border/60 shadow-elegant px-4 py-3 animate-fade-up">
+              <button
+                onClick={() => { setShowPopup(false); setPopupDismissed(true); }}
+                aria-label="Close"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-background border border-border/60 flex items-center justify-center hover:bg-secondary"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+              <div className="text-sm font-medium leading-snug">{welcome}</div>
+            </div>
+          )}
+          <button
+            onClick={() => { setOpen(true); setShowPopup(false); setPopupDismissed(true); }}
+            className="relative h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-gradient-primary text-primary-foreground shadow-glow flex items-center justify-center hover:scale-110 active:scale-95 transition-smooth animate-glow-pulse group"
+            aria-label="Open chat"
+          >
+            <MessageCircle className="h-6 w-6 sm:h-7 sm:w-7" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-background animate-pulse" />
+            <span className="absolute right-full mr-3 hidden sm:block whitespace-nowrap px-3 py-1.5 rounded-full bg-card text-foreground text-xs font-medium shadow-elegant border border-border/60 opacity-0 group-hover:opacity-100 transition-smooth pointer-events-none">
+              {lang === "bn" ? "যেকোনো প্রশ্ন? চ্যাট করুন!" : "Need help? Chat with us!"}
+            </span>
+          </button>
+        </div>
       )}
 
       {open && (
