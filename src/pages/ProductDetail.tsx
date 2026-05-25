@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ShoppingCart, ArrowLeft, Check, Package2, FileCode2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ChatWidget } from "@/components/ChatWidget";
 import { Button } from "@/components/ui/button";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/i18n/LanguageProvider";
 import { useCart } from "@/hooks/useCart";
@@ -31,8 +33,9 @@ export default function ProductDetail() {
         const { data: v } = await supabase.from("product_variants").select("*").eq("product_id", p.id).eq("is_active", true).order("sort_order");
         setVariants(v || []);
         if (p.category_id) {
-          const { data: r } = await supabase.from("products").select("*").eq("category_id", p.category_id).neq("id", p.id).eq("is_active", true).limit(4);
-          setRelated(r || []);
+          const { data: r } = await supabase.from("products").select("*").eq("category_id", p.category_id).neq("id", p.id).eq("is_active", true).limit(12);
+          const shuffled = [...(r || [])].sort(() => Math.random() - 0.5);
+          setRelated(shuffled);
         }
       }
       setLoading(false);
@@ -145,19 +148,27 @@ export default function ProductDetail() {
           {related.length > 0 && (
             <div className="mt-16">
               <h2 className="text-2xl font-bold mb-6">{lang === "bn" ? "আরও দেখুন" : "Related products"}</h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                {related.map((r) => (
-                  <Link key={r.id} to={`/product/${r.slug}`} className="group bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-primary/50 hover:-translate-y-1 transition-smooth">
-                    <div className="aspect-[4/3] bg-gradient-hero flex items-center justify-center">
-                      {r.image_url ? <img src={r.image_url} alt={r.name_en} className="w-full h-full object-cover" /> : <Package2 className="h-16 w-16 text-primary/60" />}
-                    </div>
-                    <div className="p-4">
-                      <div className="font-semibold line-clamp-2 mb-1">{lang === "bn" ? r.name_bn : r.name_en}</div>
-                      <div className="text-lg font-bold gradient-text">৳{Number(r.price).toLocaleString()}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+              <Carousel
+                opts={{ align: "start", loop: true, direction: "ltr" }}
+                plugins={[Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })]}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-3">
+                  {related.map((r) => (
+                    <CarouselItem key={r.id} className="pl-3 basis-1/2">
+                      <Link to={`/product/${r.slug}`} className="group block bg-card border border-border/60 rounded-2xl overflow-hidden hover:border-primary/50 hover:-translate-y-1 transition-smooth h-full">
+                        <div className="aspect-[4/3] bg-gradient-hero flex items-center justify-center">
+                          {r.image_url ? <img src={r.image_url} alt={r.name_en} className="w-full h-full object-cover" /> : <Package2 className="h-16 w-16 text-primary/60" />}
+                        </div>
+                        <div className="p-4">
+                          <div className="font-semibold line-clamp-2 mb-1">{lang === "bn" ? r.name_bn : r.name_en}</div>
+                          <div className="text-lg font-bold gradient-text">৳{Number(r.price).toLocaleString()}</div>
+                        </div>
+                      </Link>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </Carousel>
             </div>
           )}
         </div>
