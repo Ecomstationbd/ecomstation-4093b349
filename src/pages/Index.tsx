@@ -21,6 +21,7 @@ const Index = () => {
       <Navbar />
       <main>
         <Hero />
+        <Reveal><Partners /></Reveal>
         <Reveal><Services /></Reveal>
         <Reveal><Shop /></Reveal>
         <Reveal><WhyUs /></Reveal>
