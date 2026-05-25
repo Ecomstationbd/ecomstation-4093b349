@@ -28,6 +28,8 @@ type Testimonial = any;
 type Order = any;
 type Contact = any;
 
+import { PagesAdmin } from "@/components/admin/PagesAdmin";
+
 const NAV_ITEMS = [
   { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { value: "orders", label: "Orders", icon: ShoppingBag },
@@ -35,6 +37,7 @@ const NAV_ITEMS = [
   { value: "categories", label: "Categories", icon: FolderTree },
   { value: "products", label: "Products", icon: Package },
   { value: "blogs", label: "Blog", icon: FileText },
+  { value: "pages", label: "Pages", icon: FileText },
   { value: "testimonials", label: "Reviews", icon: MessageSquare },
   { value: "contacts", label: "Messages", icon: Mail },
   { value: "chatbot", label: "Chatbot", icon: Bot },
