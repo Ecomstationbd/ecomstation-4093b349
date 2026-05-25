@@ -15,6 +15,8 @@ export function ChatWidget() {
   const { lang } = useLanguage();
   const settings = useSiteSettings();
   const [open, setOpen] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupDismissed, setPopupDismissed] = useState(false);
   const [convId, setConvId] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
