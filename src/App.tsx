@@ -19,6 +19,8 @@ import CategoryPage from "./pages/CategoryPage.tsx";
 import ServiceDetail from "./pages/ServiceDetail.tsx";
 import ThankYou from "./pages/ThankYou.tsx";
 import AllProducts from "./pages/AllProducts.tsx";
+import Blog from "./pages/Blog.tsx";
+import BlogPost from "./pages/BlogPost.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => (
                   <Route path="/category/:slug" element={<CategoryPage />} />
                   <Route path="/service/:slug" element={<ServiceDetail />} />
                   <Route path="/physical-products" element={<AllProducts />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route path="/thank-you" element={<ThankYou />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

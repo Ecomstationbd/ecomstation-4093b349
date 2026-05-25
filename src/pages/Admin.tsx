@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet, FileText, Eye, Bold, Italic, Heading2, Link as LinkIcon, List, Image as ImageIcon, Code } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { value: "services", label: "Services", icon: Wrench },
   { value: "categories", label: "Categories", icon: FolderTree },
   { value: "products", label: "Products", icon: Package },
+  { value: "blogs", label: "Blog", icon: FileText },
   { value: "testimonials", label: "Reviews", icon: MessageSquare },
   { value: "contacts", label: "Messages", icon: Mail },
   { value: "chatbot", label: "Chatbot", icon: Bot },
@@ -152,6 +153,7 @@ export default function Admin() {
             {active === "categories" && <CategoriesAdmin />}
             {active === "products" && <ProductsAdmin />}
             {active === "testimonials" && <TestimonialsAdmin />}
+            {active === "blogs" && <BlogsAdmin />}
             {active === "orders" && <OrdersAdmin />}
             {active === "contacts" && <ContactsAdmin />}
             {active === "chatbot" && <ChatbotAdmin />}
@@ -1293,5 +1295,336 @@ function ChatbotAdmin() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ============== BLOGS ADMIN ==============
+type Blog = {
+  id: string; slug: string;
+  title_bn: string; title_en: string;
+  excerpt_bn: string | null; excerpt_en: string | null;
+  content_bn: string | null; content_en: string | null;
+  cover_url: string | null;
+  tags: string[];
+  status: string;
+  author_name: string | null;
+  published_at: string | null;
+  created_at: string;
+};
+
+function slugifyAdmin(s: string) {
+  return s.toLowerCase().trim().replace(/[^\w\u0980-\u09FF\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 80);
+}
+
+function BlogsAdmin() {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [editing, setEditing] = useState<Blog | null>(null);
+  const [open, setOpen] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("blogs").select("*").order("created_at", { ascending: false });
+    setBlogs((data as Blog[]) || []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const newBlog = () => {
+    setEditing({
+      id: "", slug: "", title_bn: "", title_en: "",
+      excerpt_bn: "", excerpt_en: "", content_bn: "", content_en: "",
+      cover_url: "", tags: [], status: "draft", author_name: "", published_at: null, created_at: "",
+    });
+    setOpen(true);
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Delete this blog post?")) return;
+    const { error } = await supabase.from("blogs").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Deleted");
+    load();
+  };
+
+  const togglePublish = async (b: Blog) => {
+    const next = b.status === "published" ? "draft" : "published";
+    const { error } = await supabase.from("blogs").update({
+      status: next,
+      published_at: next === "published" ? (b.published_at || new Date().toISOString()) : b.published_at,
+    }).eq("id", b.id);
+    if (error) return toast.error(error.message);
+    toast.success(next === "published" ? "Published" : "Unpublished");
+    load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2"><FileText className="h-6 w-6 text-primary" /> Blog Posts</h2>
+          <p className="text-sm text-muted-foreground">WordPress-style blog editor — write, preview, publish.</p>
+        </div>
+        <Button onClick={newBlog}><Plus className="h-4 w-4 mr-1" /> New Post</Button>
+      </div>
+
+      <div className="grid gap-3">
+        {blogs.length === 0 && (
+          <div className="text-center py-10 text-muted-foreground border border-dashed rounded-xl">No blog posts yet. Create your first one!</div>
+        )}
+        {blogs.map((b) => (
+          <div key={b.id} className="flex items-center gap-3 p-3 border border-border rounded-xl bg-card">
+            {b.cover_url ? (
+              <img src={b.cover_url} alt="" className="w-16 h-16 rounded-lg object-cover" />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center"><FileText className="h-5 w-5 text-muted-foreground" /></div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold truncate">{b.title_bn || b.title_en}</div>
+              <div className="text-xs text-muted-foreground truncate">/{b.slug}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${b.status === "published" ? "bg-green-500/10 text-green-600" : "bg-amber-500/10 text-amber-600"}`}>{b.status}</span>
+                {b.tags?.slice(0, 3).map((t) => <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-secondary">{t}</span>)}
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => togglePublish(b)}>{b.status === "published" ? "Unpublish" : "Publish"}</Button>
+            <Button size="sm" variant="outline" asChild><a href={`/blog/${b.slug}`} target="_blank" rel="noreferrer"><Eye className="h-4 w-4" /></a></Button>
+            <Button size="sm" variant="outline" onClick={() => { setEditing(b); setOpen(true); }}><Edit className="h-4 w-4" /></Button>
+            <Button size="sm" variant="destructive" onClick={() => remove(b.id)}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        ))}
+      </div>
+
+      <BlogEditorDialog open={open} onOpenChange={setOpen} blog={editing} onSaved={() => { load(); setOpen(false); }} />
+    </div>
+  );
+}
+
+function BlogEditorDialog({ open, onOpenChange, blog, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; blog: Blog | null; onSaved: () => void }) {
+  const [b, setB] = useState<Blog | null>(blog);
+  const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"bn" | "en">("bn");
+  const [preview, setPreview] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => { setB(blog); setPreview(false); setTab("bn"); }, [blog]);
+  if (!b) return null;
+
+  const update = (patch: Partial<Blog>) => setB({ ...b, ...patch });
+
+  const insertAtCursor = (field: "content_bn" | "content_en", before: string, after = "") => {
+    const ta = document.getElementById(`blog-${field}`) as HTMLTextAreaElement | null;
+    if (!ta) return;
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const val = ta.value;
+    const selected = val.slice(start, end);
+    const next = val.slice(0, start) + before + selected + after + val.slice(end);
+    update({ [field]: next } as any);
+    setTimeout(() => { ta.focus(); ta.selectionStart = start + before.length; ta.selectionEnd = end + before.length; }, 0);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const path = `blog/${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("site-assets").upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+      return data.publicUrl;
+    } finally { setUploading(false); }
+  };
+
+  const uploadCover = async (file: File) => {
+    try {
+      const url = await handleImageUpload(file);
+      update({ cover_url: url });
+      toast.success("Cover uploaded");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const insertImage = async (file: File, field: "content_bn" | "content_en") => {
+    try {
+      const url = await handleImageUpload(file);
+      insertAtCursor(field, `\n![image](${url})\n`);
+      toast.success("Image inserted");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const save = async (publish?: boolean) => {
+    if (!b.title_bn && !b.title_en) return toast.error("Add a title");
+    setSaving(true);
+    const slug = b.slug?.trim() || slugifyAdmin(b.title_en || b.title_bn);
+    const status = publish === true ? "published" : publish === false ? "draft" : b.status;
+    const payload = {
+      slug,
+      title_bn: b.title_bn || b.title_en,
+      title_en: b.title_en || b.title_bn,
+      excerpt_bn: b.excerpt_bn, excerpt_en: b.excerpt_en,
+      content_bn: b.content_bn, content_en: b.content_en,
+      cover_url: b.cover_url || null,
+      tags: b.tags || [],
+      status,
+      author_name: b.author_name,
+      published_at: status === "published" ? (b.published_at || new Date().toISOString()) : b.published_at,
+    };
+    const { error } = b.id
+      ? await supabase.from("blogs").update(payload).eq("id", b.id)
+      : await supabase.from("blogs").insert(payload);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Saved");
+    onSaved();
+  };
+
+  const renderPreview = (raw: string | null | undefined) => {
+    if (!raw) return "";
+    const trimmed = raw.trim();
+    const looksHtml = /<\/?[a-z][^>]*>/i.test(trimmed);
+    // simple markdown-ish fallback
+    const html = looksHtml ? trimmed : trimmed
+      .replace(/^### (.*)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.*)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.*)$/gm, "<h1>$1</h1>")
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2" />')
+      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
+      .replace(/^- (.*)$/gm, "<li>$1</li>")
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/^/, "<p>") + "</p>";
+    return html;
+  };
+
+  const field = tab === "bn" ? "content_bn" : "content_en";
+  const contentValue = (tab === "bn" ? b.content_bn : b.content_en) || "";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{b.id ? "Edit Post" : "New Post"}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Main column */}
+          <div className="lg:col-span-2 space-y-3">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+              <TabsList>
+                <TabsTrigger value="bn">বাংলা</TabsTrigger>
+                <TabsTrigger value="en">English</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <div>
+              <Label>Title</Label>
+              <Input
+                value={tab === "bn" ? b.title_bn : b.title_en}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (tab === "bn") update({ title_bn: v, slug: b.slug || slugifyAdmin(b.title_en || v) });
+                  else update({ title_en: v, slug: b.slug || slugifyAdmin(v) });
+                }}
+                placeholder={tab === "bn" ? "ব্লগ টাইটেল" : "Blog title"}
+                className="text-lg font-semibold"
+              />
+            </div>
+
+            <div>
+              <Label>Excerpt</Label>
+              <Textarea
+                value={(tab === "bn" ? b.excerpt_bn : b.excerpt_en) || ""}
+                onChange={(e) => update(tab === "bn" ? { excerpt_bn: e.target.value } : { excerpt_en: e.target.value })}
+                placeholder="Short summary..."
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label>Content</Label>
+                <div className="flex items-center gap-1">
+                  <Button type="button" size="sm" variant="ghost" onClick={() => setPreview(!preview)}>
+                    <Eye className="h-3 w-3 mr-1" /> {preview ? "Edit" : "Preview"}
+                  </Button>
+                </div>
+              </div>
+
+              {!preview && (
+                <div className="flex flex-wrap items-center gap-1 p-1.5 border border-border rounded-t-md bg-secondary/30">
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => insertAtCursor(field, "**", "**")} title="Bold"><Bold className="h-3.5 w-3.5" /></Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => insertAtCursor(field, "*", "*")} title="Italic"><Italic className="h-3.5 w-3.5" /></Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => insertAtCursor(field, "\n## ", "\n")} title="Heading"><Heading2 className="h-3.5 w-3.5" /></Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => insertAtCursor(field, "\n- ", "")} title="List"><List className="h-3.5 w-3.5" /></Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => { const u = prompt("URL?"); if (u) insertAtCursor(field, "[", `](${u})`); }} title="Link"><LinkIcon className="h-3.5 w-3.5" /></Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => insertAtCursor(field, "\n```\n", "\n```\n")} title="Code"><Code className="h-3.5 w-3.5" /></Button>
+                  <label className="inline-flex items-center justify-center h-7 w-7 rounded hover:bg-accent cursor-pointer" title="Image">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) insertImage(f, field); e.target.value = ""; }} />
+                  </label>
+                  {uploading && <span className="text-xs text-muted-foreground ml-1">Uploading…</span>}
+                </div>
+              )}
+
+              {preview ? (
+                <div className="border border-border rounded-md p-4 min-h-[400px] prose prose-neutral dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: renderPreview(contentValue) }} />
+              ) : (
+                <Textarea
+                  id={`blog-${field}`}
+                  value={contentValue}
+                  onChange={(e) => update(tab === "bn" ? { content_bn: e.target.value } : { content_en: e.target.value })}
+                  placeholder={tab === "bn" ? "এখানে আপনার ব্লগ লিখুন... (Markdown বা HTML সাপোর্টেড)" : "Write your post... (Markdown or HTML supported)"}
+                  rows={20}
+                  className="rounded-t-none font-mono text-sm"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-3">
+            <div className="p-3 border border-border rounded-xl space-y-3">
+              <h3 className="font-semibold text-sm">Publish</h3>
+              <div className="flex items-center justify-between text-sm">
+                <span>Status</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${b.status === "published" ? "bg-green-500/10 text-green-600" : "bg-amber-500/10 text-amber-600"}`}>{b.status}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => save(false)} disabled={saving}>Save Draft</Button>
+                <Button size="sm" className="flex-1" onClick={() => save(true)} disabled={saving}>Publish</Button>
+              </div>
+            </div>
+
+            <div className="p-3 border border-border rounded-xl space-y-2">
+              <Label>Slug</Label>
+              <Input value={b.slug} onChange={(e) => update({ slug: slugifyAdmin(e.target.value) })} placeholder="my-blog-post" />
+              <p className="text-[10px] text-muted-foreground">URL: /blog/{b.slug || "..."}</p>
+            </div>
+
+            <div className="p-3 border border-border rounded-xl space-y-2">
+              <Label>Cover image</Label>
+              {b.cover_url && <img src={b.cover_url} alt="" className="w-full aspect-[16/9] object-cover rounded-md" />}
+              <Input value={b.cover_url || ""} onChange={(e) => update({ cover_url: e.target.value })} placeholder="https://..." />
+              <label className="inline-flex w-full">
+                <Button type="button" size="sm" variant="outline" className="w-full" asChild>
+                  <span>{uploading ? "Uploading…" : "Upload image"}</span>
+                </Button>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCover(f); e.target.value = ""; }} />
+              </label>
+            </div>
+
+            <div className="p-3 border border-border rounded-xl space-y-2">
+              <Label>Tags (comma separated)</Label>
+              <Input
+                value={(b.tags || []).join(", ")}
+                onChange={(e) => update({ tags: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                placeholder="marketing, seo, ecommerce"
+              />
+            </div>
+
+            <div className="p-3 border border-border rounded-xl space-y-2">
+              <Label>Author name</Label>
+              <Input value={b.author_name || ""} onChange={(e) => update({ author_name: e.target.value })} placeholder="Admin" />
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
