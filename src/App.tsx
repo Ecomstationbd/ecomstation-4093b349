@@ -48,6 +48,7 @@ const App = () => (
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:slug" element={<BlogPost />} />
                   <Route path="/thank-you" element={<ThankYou />} />
+                  <Route path="/:slug" element={<CustomPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <CartDrawer />
