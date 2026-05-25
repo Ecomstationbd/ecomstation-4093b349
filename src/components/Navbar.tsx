@@ -8,24 +8,34 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useMenuItems } from "@/hooks/useMenuItems";
 import defaultLogo from "@/assets/ecomstation-logo.png";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { count, setOpen: setCartOpen } = useCart();
   const { isAdmin, user } = useAuth();
   const settings = useSiteSettings();
+  const { items: menuItems, loaded } = useMenuItems();
 
-  const links = [
-    { href: "/#services", label: t("nav_services") },
-    { href: "/#shop", label: t("nav_shop") },
-    { href: "/blog", label: t("nav_blog") },
-    { href: "/#why", label: t("nav_why") },
-    { href: "/#testimonials", label: t("nav_testimonials") },
-    { href: "/#contact", label: t("nav_contact") },
+  const fallbackLinks = [
+    { href: "/#services", label: t("nav_services"), external: false },
+    { href: "/#shop", label: t("nav_shop"), external: false },
+    { href: "/blog", label: t("nav_blog"), external: false },
+    { href: "/#why", label: t("nav_why"), external: false },
+    { href: "/#testimonials", label: t("nav_testimonials"), external: false },
+    { href: "/#contact", label: t("nav_contact"), external: false },
   ];
+
+  const links = loaded && menuItems.length > 0
+    ? menuItems.map((m) => ({
+        href: m.href,
+        label: lang === "bn" ? m.label_bn : m.label_en,
+        external: m.open_in_new_tab,
+      }))
+    : fallbackLinks;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
