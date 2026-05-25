@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet } from "lucide-react";
+import { Trash2, Edit, Plus, LogOut, ShieldCheck, Wrench, FolderTree, Package, MessageSquare, ShoppingBag, Mail, Bot, Settings, LayoutDashboard, AlertTriangle, TrendingUp, DollarSign, Clock, Printer, FileSpreadsheet, FileText, Eye, Bold, Italic, Heading2, Link as LinkIcon, List, Image as ImageIcon, Code } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { value: "services", label: "Services", icon: Wrench },
   { value: "categories", label: "Categories", icon: FolderTree },
   { value: "products", label: "Products", icon: Package },
+  { value: "blogs", label: "Blog", icon: FileText },
   { value: "testimonials", label: "Reviews", icon: MessageSquare },
   { value: "contacts", label: "Messages", icon: Mail },
   { value: "chatbot", label: "Chatbot", icon: Bot },
@@ -152,6 +153,7 @@ export default function Admin() {
             {active === "categories" && <CategoriesAdmin />}
             {active === "products" && <ProductsAdmin />}
             {active === "testimonials" && <TestimonialsAdmin />}
+            {active === "blogs" && <BlogsAdmin />}
             {active === "orders" && <OrdersAdmin />}
             {active === "contacts" && <ContactsAdmin />}
             {active === "chatbot" && <ChatbotAdmin />}
