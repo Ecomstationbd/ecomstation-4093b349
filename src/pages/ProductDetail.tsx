@@ -33,8 +33,9 @@ export default function ProductDetail() {
         const { data: v } = await supabase.from("product_variants").select("*").eq("product_id", p.id).eq("is_active", true).order("sort_order");
         setVariants(v || []);
         if (p.category_id) {
-          const { data: r } = await supabase.from("products").select("*").eq("category_id", p.category_id).neq("id", p.id).eq("is_active", true).limit(4);
-          setRelated(r || []);
+          const { data: r } = await supabase.from("products").select("*").eq("category_id", p.category_id).neq("id", p.id).eq("is_active", true).limit(12);
+          const shuffled = [...(r || [])].sort(() => Math.random() - 0.5);
+          setRelated(shuffled);
         }
       }
       setLoading(false);
