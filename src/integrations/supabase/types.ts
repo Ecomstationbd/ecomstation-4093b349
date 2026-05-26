@@ -752,6 +752,7 @@ export type Database = {
           is_active: boolean
           price: number | null
           price_text: string | null
+          redirect_url: string | null
           slug: string
           sort_order: number
           title_bn: string
@@ -773,6 +774,7 @@ export type Database = {
           is_active?: boolean
           price?: number | null
           price_text?: string | null
+          redirect_url?: string | null
           slug: string
           sort_order?: number
           title_bn: string
@@ -794,6 +796,7 @@ export type Database = {
           is_active?: boolean
           price?: number | null
           price_text?: string | null
+          redirect_url?: string | null
           slug?: string
           sort_order?: number
           title_bn?: string
