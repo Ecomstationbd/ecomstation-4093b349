@@ -152,20 +152,17 @@ export default function Auth() {
               <div>
                 <Label>{bn ? "ফোন নম্বর" : "Phone number"}</Label>
                 <Input type="tel" placeholder="+8801XXXXXXXXX" value={phone}
-                  onChange={(e) => { setPhone(e.target.value); setOtpSent(false); }} required />
+                  onChange={(e) => setPhone(e.target.value)} required />
               </div>
-              {otpSent && (
-                <div>
-                  <Label>OTP</Label>
-                  <Input inputMode="numeric" value={otp} onChange={(e) => setOtp(e.target.value)} required />
-                </div>
-              )}
+              <div>
+                <Label>Password</Label>
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
             </>
           )}
           <Button type="submit" variant="hero" className="w-full" disabled={busy}>
             {busy ? "..."
               : mode === "forgot" ? (bn ? "রিসেট লিংক পাঠান" : "Send reset link")
-              : method === "phone" ? (otpSent ? (bn ? "যাচাই করুন" : "Verify OTP") : (bn ? "OTP পাঠান" : "Send OTP"))
               : mode === "login" ? (bn ? "লগইন" : "Sign In")
               : (bn ? "সাইন আপ" : "Sign Up")}
           </Button>
