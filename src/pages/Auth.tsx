@@ -167,7 +167,8 @@ export default function Auth() {
               : (bn ? "সাইন আপ" : "Sign Up")}
           </Button>
         </form>
-        {mode !== "forgot" && (
+        {/* Google sign-in temporarily hidden */}
+        {false && mode !== "forgot" && (
           <>
             <div className="my-4 flex items-center gap-2 text-xs text-muted-foreground">
               <div className="flex-1 h-px bg-border" /> OR <div className="flex-1 h-px bg-border" />
