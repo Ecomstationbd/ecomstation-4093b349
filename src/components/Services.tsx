@@ -14,6 +14,7 @@ type Service = {
   icon: string | null;
   badge: string | null;
   coming_soon: boolean;
+  redirect_url: string | null;
 };
 
 export function Services() {
@@ -42,8 +43,10 @@ export function Services() {
             const title = lang === "bn" ? s.title_bn : s.title_en;
             const desc = lang === "bn" ? s.description_bn : s.description_en;
             const tag = s.coming_soon ? (lang === "bn" ? "শীঘ্রই আসছে" : "Coming Soon") : s.badge;
-            return (
-              <Link key={s.id} to={`/service/${s.slug}`} className="group relative p-6 rounded-2xl bg-gradient-card border border-border/60 hover:border-primary/50 transition-smooth hover:-translate-y-1 hover:shadow-elegant overflow-hidden block" style={{ animationDelay: `${i * 50}ms` }}>
+            const href = s.redirect_url && s.redirect_url.trim() ? s.redirect_url.trim() : null;
+            const isExternal = !!href && /^https?:\/\//i.test(href);
+            const cardInner = (
+              <>
                 <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-gradient-primary opacity-0 group-hover:opacity-20 blur-2xl transition-smooth" />
                 {tag && (
                   <span className="absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-accent text-accent-foreground uppercase tracking-wider">
@@ -56,10 +59,32 @@ export function Services() {
                   </div>
                   <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-smooth">{title}</h3>
                   {desc && <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{desc}</p>}
-                  <div className="mt-3 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-smooth">
-                    {lang === "bn" ? "বিস্তারিত দেখুন →" : "View details →"}
-                  </div>
+                  {href && (
+                    <div className="mt-3 text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-smooth">
+                      {lang === "bn" ? "বিস্তারিত দেখুন →" : "View details →"}
+                    </div>
+                  )}
                 </div>
+              </>
+            );
+            const className = "group relative p-6 rounded-2xl bg-gradient-card border border-border/60 hover:border-primary/50 transition-smooth hover:-translate-y-1 hover:shadow-elegant overflow-hidden block";
+            if (!href) {
+              return (
+                <div key={s.id} className={className} style={{ animationDelay: `${i * 50}ms` }}>
+                  {cardInner}
+                </div>
+              );
+            }
+            if (isExternal) {
+              return (
+                <a key={s.id} href={href} target="_blank" rel="noopener noreferrer" className={className} style={{ animationDelay: `${i * 50}ms` }}>
+                  {cardInner}
+                </a>
+              );
+            }
+            return (
+              <Link key={s.id} to={href} className={className} style={{ animationDelay: `${i * 50}ms` }}>
+                {cardInner}
               </Link>
             );
           })}

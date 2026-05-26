@@ -448,6 +448,11 @@ function ServiceForm({ value, onChange, onSave }: any) {
         <div><Label>Price label</Label><Input value={value.price_text || ""} onChange={(e) => set("price_text", e.target.value)} placeholder="৳5,000 থেকে" /></div>
       </div>
       <div>
+        <Label>Redirect URL (optional)</Label>
+        <Input value={value.redirect_url || ""} onChange={(e) => set("redirect_url", e.target.value)} placeholder="https://example.com or /custom-page" />
+        <p className="text-xs text-muted-foreground mt-1">If set, clicking this service on the homepage opens this link instead of doing nothing. Leave empty to disable click.</p>
+      </div>
+      <div>
         <Label>Features (one per line)</Label>
         <Textarea rows={4} value={features.join("\n")} onChange={(e) => set("features", e.target.value.split("\n").map((s) => s.trim()).filter(Boolean))} placeholder="Free domain&#10;SSL included&#10;1 year support" />
       </div>
