@@ -23,8 +23,12 @@ export default function Auth() {
   const { lang } = useLanguage();
   const bn = lang === "bn";
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const redirectFor = (admin: boolean) => (admin ? "/admin" : "/dashboard");
