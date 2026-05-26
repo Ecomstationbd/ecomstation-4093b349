@@ -172,11 +172,41 @@
   50% { transform: translateY(-12px); }
 }
 
-/* Bangla digits override — use Noto Sans Bengali only for ০-৯ so numbers are legible */
+/* Bangla digits override — use Noto Sans Bengali only for ০-৯ so numbers are legible.
+   Web font src ensures digits render correctly on desktop/tablet/mobile even when the
+   font is not installed locally. */
 @font-face {
   font-family: 'BanglaDigits';
-  src: local('Noto Sans Bengali'), local('NotoSansBengali-Regular');
-  font-weight: 100 900;
+  src: local('Noto Sans Bengali'), local('NotoSansBengali-Regular'),
+       url('https://fonts.gstatic.com/s/notosansbengali/v33/Cn-SJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mcSPVFpVEqE-6KmsolLudA.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+09E6-09EF;
+}
+@font-face {
+  font-family: 'BanglaDigits';
+  src: local('Noto Sans Bengali'), local('NotoSansBengali-Regular'),
+       url('https://fonts.gstatic.com/s/notosansbengali/v33/Cn-SJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mcSPVFpVEqE-6KmsrtLudA.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+09E6-09EF;
+}
+@font-face {
+  font-family: 'BanglaDigits';
+  src: local('Noto Sans Bengali'), local('NotoSansBengali-Regular'),
+       url('https://fonts.gstatic.com/s/notosansbengali/v33/Cn-SJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mcSPVFpVEqE-6KmsldMudA.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+09E6-09EF;
+}
+@font-face {
+  font-family: 'BanglaDigits';
+  src: local('Noto Sans Bengali'), local('NotoSansBengali-Regular'),
+       url('https://fonts.gstatic.com/s/notosansbengali/v33/Cn-SJsCGWQxOjaGwMQ6fIiMywrNJIky6nvd8BjzVMvJx2mcSPVFpVEqE-6Kmsm5MudA.ttf') format('truetype');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
   unicode-range: U+09E6-09EF;
