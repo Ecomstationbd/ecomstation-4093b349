@@ -15,6 +15,8 @@ const schema = z.object({
   password: z.string().min(6).max(100),
 });
 
+const phoneSchema = z.string().trim().regex(/^\+[1-9]\d{7,14}$/, "Use international format e.g. +8801XXXXXXXXX");
+
 export default function Auth() {
   const { user, loading, isAdmin } = useAuth();
   const nav = useNavigate();
