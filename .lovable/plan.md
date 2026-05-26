@@ -1,40 +1,40 @@
-## Plan
+## Problem
 
-### 1. App-like loading system
-- Add a splash screen component (`SplashScreen.tsx`) shown on first paint with brand logo, gradient background, and animated pulse/progress.
-- Mount it in `main.tsx` / `App.tsx` — hide after initial data + auth ready (min 800ms for polish).
-- Also add a route-change top loading bar (thin gradient bar at top during navigation/data fetch).
+Site Vercel a deploy korar pore "Continue with Google" click korle 404 ashe.
 
-### 2. Default Light theme + Bangla
-- Update `ThemeProvider` to `defaultTheme="light"`.
-- Update `LanguageProvider` default to `"bn"` (already is, but ensure first-visit always uses `bn` regardless of any prior storage migration).
-- Keep user's toggle preference once they change it.
+Code review theke (`src/pages/Auth.tsx:76`):
+```ts
+lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/dashboard` })
+```
 
-### 3. Mobile-responsive Chatbot
-- Refactor `ChatWidget.tsx`:
-  - Full-screen sheet on mobile (`<sm`): width 100vw, height 100dvh, no bottom offset, top safe-area.
-  - Floating bubble: smaller on mobile, lifted higher (`bottom-24`) to clear sticky CTAs.
-  - Sticky input bar with keyboard-safe padding (`pb-[env(safe-area-inset-bottom)]`).
-  - Larger touch targets, better message bubbles, auto-focus on open (desktop only).
+Eta `https://<your-app>.vercel.app/dashboard` e callback pathate chaay. But Lovable Cloud (Supabase Auth) shudhu shei redirect URL-gulo accept kore jegulo **Site URL** ba **Additional Redirect URLs** list a add kora ache. Vercel domain ekhono add kora nai → Supabase callback fail kore / Google "redirect_uri_mismatch" dey, ar user shesh porjonto 404 page a chole jay.
 
-### 4. Customer login + Customer Dashboard
-- **Auth changes**:
-  - Allow customer (non-admin) signup + login on `/auth` (currently admin-only flow stays, but customer signup is enabled with Google + email/password).
-  - On signup: trigger creates a `profiles` row.
-- **DB migration**:
-  - `profiles` table: `user_id` (unique, FK auth.users), `display_name`, `phone`, `avatar_url`.
-  - Auto-create profile via `handle_new_user` trigger on `auth.users`.
-  - Add nullable `user_id` column to `orders` + `contact_messages` so customer's submissions are linked when logged in.
-  - RLS: customers read/update own profile; customers read own orders/contact_messages (admin keeps existing access).
-- **New page `/dashboard`** (`src/pages/Dashboard.tsx`):
-  - Tabs: Profile (edit name/phone), My Orders (list with status, items, total), My Messages (contact submissions + chatbot conversations).
-  - Order detail expansion shows order_items.
-- **Wiring**:
-  - Checkout/Contact forms attach `user_id` if logged in.
-  - Navbar: when logged-in non-admin → show "Dashboard" + Logout; when guest → show "Login".
-  - Keep existing admin redirect to `/admin`.
+`vercel.json` te SPA fallback (`/.*` → `/index.html`) already ache, tai SPA routing er problem na — problem **auth redirect whitelist**.
 
-### Technical details
-- Files to **create**: `src/components/SplashScreen.tsx`, `src/components/RouteLoader.tsx`, `src/pages/Dashboard.tsx`, migration for `profiles` + order/contact `user_id` + customer RLS.
-- Files to **edit**: `src/main.tsx` or `src/App.tsx` (splash + route loader), `src/components/ThemeProvider.tsx` (defaultTheme="light"), `src/i18n/LanguageProvider.tsx` (default bn enforcement), `src/components/ChatWidget.tsx` (mobile full-screen + responsive polish), `src/pages/Auth.tsx` (customer signup tab + redirect non-admin to `/dashboard`), `src/components/Navbar.tsx` (Dashboard/Logout link), `src/components/CartDrawer.tsx` or checkout submit (attach user_id), `src/components/ContactForm.tsx` (attach user_id), `src/App.tsx` (new `/dashboard` route).
-- No changes to admin tables/policies; only additive.
+## Fix (no code change needed)
+
+1. **Lovable Cloud → Authentication → URL Configuration** a jao.
+2. **Site URL** set koro tomar Vercel production URL diye, jemon:
+   `https://your-app.vercel.app`
+3. **Additional Redirect URLs** a ei pattern gulo add koro (ja ja use korte chao):
+   - `https://your-app.vercel.app/**`
+   - `https://*-your-team.vercel.app/**` (preview deploys er jonno, optional)
+   - `https://ecomstation.lovable.app/**` (Lovable published URL — already kaaj korche)
+   - `http://localhost:5173/**` (local dev)
+4. Save koro. Notun OAuth attempt sathe sathe kaaj korbe — re-deploy lage na.
+
+## Managed vs Custom Google credentials
+
+- Default a Lovable Cloud **managed Google OAuth** use hocche → Google Cloud Console a kichu korar dorkar nai.
+- Jodi tumi nijer Google Client ID/Secret use korcho, tahole **Google Cloud Console → Credentials → OAuth Client → Authorized redirect URIs** a Supabase callback URL (Lovable Cloud Auth Settings → Google provider section a dekhabe, ending `/auth/v1/callback`) thaka lagbe. Vercel domain ta authorized JavaScript origins a add koro.
+
+## Verify
+
+Vercel URL theke login try koro:
+1. `/auth` page a jao
+2. "Continue with Google" click koro
+3. Google account select korar pore `https://your-app.vercel.app/dashboard` a redirect howa uchit, session set thakbe.
+
+## Bonus (optional)
+
+`Auth.tsx` te `/dashboard` hardcoded redirect ache — admin user holeo `/dashboard` a jabe. Chaile ami `useAuth` er `isAdmin` check kore admin hole `/admin` a pathate pari. Eta alada kaaj, ekhon scope er baire.
