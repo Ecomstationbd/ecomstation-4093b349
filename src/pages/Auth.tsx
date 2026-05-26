@@ -59,21 +59,21 @@ export default function Auth() {
     if (method === "phone") {
       const okPhone = phoneSchema.safeParse(phone);
       if (!okPhone.success) { toast.error(bn ? "সঠিক ফোন নম্বর দিন (e.g. +8801XXXXXXXXX)" : okPhone.error.issues[0].message); return; }
+      const okPass = z.string().min(6).max(100).safeParse(password).success;
+      if (!okPass) { toast.error(bn ? "পাসওয়ার্ড ৬+ অক্ষর দিন" : "Password 6+ chars required"); return; }
       setBusy(true);
-      if (!otpSent) {
-        const { error } = await supabase.auth.signInWithOtp({
-          phone,
-          options: { shouldCreateUser: mode === "signup" },
-        });
-        setBusy(false);
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({ phone, password });
         if (error) toast.error(error.message);
-        else { setOtpSent(true); toast.success(bn ? "OTP পাঠানো হয়েছে" : "OTP sent to your phone"); }
+        else {
+          toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে!" : "Account created!");
+          await supabase.auth.signInWithPassword({ phone, password });
+        }
       } else {
-        if (otp.length < 4) { setBusy(false); toast.error(bn ? "OTP দিন" : "Enter OTP"); return; }
-        const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
-        setBusy(false);
+        const { error } = await supabase.auth.signInWithPassword({ phone, password });
         if (error) toast.error(error.message);
       }
+      setBusy(false);
       return;
     }
 
@@ -152,20 +152,17 @@ export default function Auth() {
               <div>
                 <Label>{bn ? "ফোন নম্বর" : "Phone number"}</Label>
                 <Input type="tel" placeholder="+8801XXXXXXXXX" value={phone}
-                  onChange={(e) => { setPhone(e.target.value); setOtpSent(false); }} required />
+                  onChange={(e) => setPhone(e.target.value)} required />
               </div>
-              {otpSent && (
-                <div>
-                  <Label>OTP</Label>
-                  <Input inputMode="numeric" value={otp} onChange={(e) => setOtp(e.target.value)} required />
-                </div>
-              )}
+              <div>
+                <Label>Password</Label>
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
             </>
           )}
           <Button type="submit" variant="hero" className="w-full" disabled={busy}>
             {busy ? "..."
               : mode === "forgot" ? (bn ? "রিসেট লিংক পাঠান" : "Send reset link")
-              : method === "phone" ? (otpSent ? (bn ? "যাচাই করুন" : "Verify OTP") : (bn ? "OTP পাঠান" : "Send OTP"))
               : mode === "login" ? (bn ? "লগইন" : "Sign In")
               : (bn ? "সাইন আপ" : "Sign Up")}
           </Button>
