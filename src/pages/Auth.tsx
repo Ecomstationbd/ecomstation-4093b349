@@ -15,14 +15,20 @@ const schema = z.object({
   password: z.string().min(6).max(100),
 });
 
+const phoneSchema = z.string().trim().regex(/^\+[1-9]\d{7,14}$/, "Use international format e.g. +8801XXXXXXXXX");
+
 export default function Auth() {
   const { user, loading, isAdmin } = useAuth();
   const nav = useNavigate();
   const { lang } = useLanguage();
   const bn = lang === "bn";
   const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [method, setMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const redirectFor = (admin: boolean) => (admin ? "/admin" : "/dashboard");
@@ -49,6 +55,28 @@ export default function Auth() {
       else toast.success(bn ? "রিসেট লিংক পাঠানো হয়েছে। ইমেইল চেক করুন।" : "Reset link sent. Check your inbox.");
       return;
     }
+
+    if (method === "phone") {
+      const okPhone = phoneSchema.safeParse(phone);
+      if (!okPhone.success) { toast.error(bn ? "সঠিক ফোন নম্বর দিন (e.g. +8801XXXXXXXXX)" : okPhone.error.issues[0].message); return; }
+      setBusy(true);
+      if (!otpSent) {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone,
+          options: { shouldCreateUser: mode === "signup" },
+        });
+        setBusy(false);
+        if (error) toast.error(error.message);
+        else { setOtpSent(true); toast.success(bn ? "OTP পাঠানো হয়েছে" : "OTP sent to your phone"); }
+      } else {
+        if (otp.length < 4) { setBusy(false); toast.error(bn ? "OTP দিন" : "Enter OTP"); return; }
+        const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
+        setBusy(false);
+        if (error) toast.error(error.message);
+      }
+      return;
+    }
+
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) { toast.error(bn ? "সঠিক ইমেইল ও পাসওয়ার্ড দিন (৬+)" : "Valid email & password (6+) required"); return; }
     setBusy(true);
@@ -61,7 +89,6 @@ export default function Auth() {
       else {
         toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে!" : "Account created!");
         if (!data.session) {
-          // fallback: auto sign in if session not returned
           await supabase.auth.signInWithPassword({ email, password });
         }
       }
@@ -91,9 +118,23 @@ export default function Auth() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-elegant p-8">
         <h1 className="text-2xl font-bold mb-1 gradient-text">{title}</h1>
         <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
+        {mode !== "forgot" && (
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
+            <button type="button" onClick={() => { setMethod("email"); setOtpSent(false); }}
+              className={`text-sm py-1.5 rounded-md transition ${method === "email" ? "bg-background shadow" : "text-muted-foreground"}`}>
+              {bn ? "ইমেইল" : "Email"}
+            </button>
+            <button type="button" onClick={() => { setMethod("phone"); setOtpSent(false); }}
+              className={`text-sm py-1.5 rounded-md transition ${method === "phone" ? "bg-background shadow" : "text-muted-foreground"}`}>
+              {bn ? "ফোন" : "Phone"}
+            </button>
+          </div>
+        )}
         <form onSubmit={submit} className="space-y-4">
-          <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-          {mode !== "forgot" && (
+          {(mode === "forgot" || method === "email") && (
+            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+          )}
+          {mode !== "forgot" && method === "email" && (
             <div>
               <div className="flex items-center justify-between">
                 <Label>Password</Label>
@@ -106,14 +147,30 @@ export default function Auth() {
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
           )}
+          {mode !== "forgot" && method === "phone" && (
+            <>
+              <div>
+                <Label>{bn ? "ফোন নম্বর" : "Phone number"}</Label>
+                <Input type="tel" placeholder="+8801XXXXXXXXX" value={phone}
+                  onChange={(e) => { setPhone(e.target.value); setOtpSent(false); }} required />
+              </div>
+              {otpSent && (
+                <div>
+                  <Label>OTP</Label>
+                  <Input inputMode="numeric" value={otp} onChange={(e) => setOtp(e.target.value)} required />
+                </div>
+              )}
+            </>
+          )}
           <Button type="submit" variant="hero" className="w-full" disabled={busy}>
             {busy ? "..."
+              : mode === "forgot" ? (bn ? "রিসেট লিংক পাঠান" : "Send reset link")
+              : method === "phone" ? (otpSent ? (bn ? "যাচাই করুন" : "Verify OTP") : (bn ? "OTP পাঠান" : "Send OTP"))
               : mode === "login" ? (bn ? "লগইন" : "Sign In")
-              : mode === "signup" ? (bn ? "সাইন আপ" : "Sign Up")
-              : (bn ? "রিসেট লিংক পাঠান" : "Send reset link")}
+              : (bn ? "সাইন আপ" : "Sign Up")}
           </Button>
         </form>
-        {mode !== "forgot" && (
+        {mode !== "forgot" && method === "email" && (
           <>
             <div className="my-4 flex items-center gap-2 text-xs text-muted-foreground">
               <div className="flex-1 h-px bg-border" /> OR <div className="flex-1 h-px bg-border" />
@@ -127,7 +184,7 @@ export default function Auth() {
               {bn ? "← লগইনে ফিরে যান" : "← Back to sign in"}
             </button>
           ) : (
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="text-sm text-primary hover:underline">
+            <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setOtpSent(false); }} className="text-sm text-primary hover:underline">
               {mode === "login" ? (bn ? "অ্যাকাউন্ট নেই? সাইন আপ" : "No account? Sign up") : (bn ? "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন" : "Have an account? Sign in")}
             </button>
           )}
