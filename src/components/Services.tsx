@@ -14,6 +14,7 @@ type Service = {
   icon: string | null;
   badge: string | null;
   coming_soon: boolean;
+  redirect_url: string | null;
 };
 
 export function Services() {
