@@ -165,6 +165,12 @@ export default function Dashboard() {
                 <div>
                   <Label>{bn ? "ফোন" : "Phone"}</Label>
                   <Input value={profile?.phone || ""} onChange={(e) => setProfile((p) => p ? { ...p, phone: e.target.value } : p)} />
+                  {user.phone && !user.phone_confirmed_at && (
+                    <PhoneVerify phone={user.phone} bn={bn} />
+                  )}
+                  {!user.phone && profile?.phone && (
+                    <PhoneVerify phone={profile.phone} bn={bn} />
+                  )}
                 </div>
                 <Button variant="hero" onClick={saveProfile} disabled={busy || !profile}>
                   {busy ? "..." : bn ? "সেভ করুন" : "Save"}
