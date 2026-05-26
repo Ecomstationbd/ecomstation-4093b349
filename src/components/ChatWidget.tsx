@@ -10,6 +10,7 @@ import { toast } from "sonner";
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 const STORAGE_KEY = "ecomstation_chat_conv";
+const VISITOR_KEY = "ecomstation_chat_visitor";
 
 export function ChatWidget() {
   const { lang } = useLanguage();
@@ -18,12 +19,18 @@ export function ChatWidget() {
   const [showPopup, setShowPopup] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
   const [convId, setConvId] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
+  const [visitor, setVisitor] = useState<{ name: string; contact: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem(VISITOR_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+  const [preName, setPreName] = useState("");
+  const [preContact, setPreContact] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showEscalate, setShowEscalate] = useState(false);
-  const [name, setName] = useState("");
-  const [contact, setContact] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const enabled = settings.chatbot_enabled !== "false";
@@ -32,15 +39,19 @@ export function ChatWidget() {
     : (settings.chatbot_welcome_en || "Hello! How can I help you?");
 
   useEffect(() => {
-    if (messages.length === 0) setMessages([{ role: "assistant", content: welcome }]);
+    if (messages.length === 0 && visitor) {
+      const greet = visitor.name
+        ? (lang === "bn" ? `হ্যালো ${visitor.name}! ${welcome}` : `Hi ${visitor.name}! ${welcome}`)
+        : welcome;
+      setMessages([{ role: "assistant", content: greet }]);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [welcome]);
+  }, [welcome, visitor]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  // Show welcome popup after 10s on home, hide after 5s
   useEffect(() => {
     if (!enabled || popupDismissed || open) return;
     if (typeof window === "undefined" || window.location.pathname !== "/") return;
@@ -55,7 +66,6 @@ export function ChatWidget() {
     };
   }, [enabled, popupDismissed, open]);
 
-  // Lock body scroll on mobile when open
   useEffect(() => {
     if (!open) return;
     const isMobile = window.matchMedia("(max-width: 640px)").matches;
@@ -65,14 +75,30 @@ export function ChatWidget() {
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
+  const startChat = () => {
+    const name = preName.trim();
+    const contact = preContact.trim();
+    if (name.length < 2) {
+      toast.error(lang === "bn" ? "অনুগ্রহ করে আপনার নাম দিন" : "Please enter your name");
+      return;
+    }
+    if (contact.length < 5) {
+      toast.error(lang === "bn" ? "ফোন/ইমেইল দিন" : "Please enter phone or email");
+      return;
+    }
+    const v = { name, contact };
+    setVisitor(v);
+    localStorage.setItem(VISITOR_KEY, JSON.stringify(v));
+  };
+
   const send = async (text: string) => {
-    if (!text.trim() || loading) return;
+    if (!text.trim() || loading || !visitor) return;
     setMessages((m) => [...m, { role: "user", content: text }]);
     setInput("");
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("chat-bot", {
-        body: { conversationId: convId, message: text },
+        body: { conversationId: convId, message: text, visitor },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -89,14 +115,11 @@ export function ChatWidget() {
   };
 
   const submitEscalation = async () => {
-    if (!name.trim() || !contact.trim()) {
-      toast.error(lang === "bn" ? "নাম ও যোগাযোগ দিন" : "Name and contact required");
-      return;
-    }
+    if (!visitor) return;
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("chat-bot", {
-        body: { conversationId: convId, escalate: true, visitor: { name, contact } },
+        body: { conversationId: convId, escalate: true, visitor },
       });
       if (error) throw error;
       if (data.conversationId && data.conversationId !== convId) {
@@ -152,7 +175,6 @@ export function ChatWidget() {
                      sm:left-auto sm:bottom-24 sm:right-6 sm:w-[26rem] sm:max-w-md sm:h-[34rem]"
         >
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-primary text-primary-foreground shrink-0 rounded-t-2xl">
-
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" />
               <div>
@@ -165,62 +187,100 @@ export function ChatWidget() {
             </button>
           </div>
 
-          <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2 bg-background/60">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : m.role === "system"
-                    ? "bg-accent/30 text-foreground border border-accent/40 italic"
-                    : "bg-secondary text-secondary-foreground rounded-bl-sm"
-                }`}>{m.content}</div>
+          {!visitor ? (
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-3 bg-background/60">
+              <div className="text-base font-semibold">
+                {lang === "bn" ? "চ্যাট শুরু করার আগে" : "Before we start"}
               </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-secondary rounded-2xl px-3 py-2 text-sm flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
-                </div>
+              <div className="text-sm text-muted-foreground">
+                {lang === "bn"
+                  ? "আপনার নাম ও যোগাযোগের তথ্য দিন যাতে আমরা ভালোভাবে সাহায্য করতে পারি।"
+                  : "Please share your name and contact so we can help you better."}
               </div>
-            )}
-          </div>
-
-          {showEscalate ? (
-            <div className="p-3 border-t border-border/50 space-y-2 bg-card shrink-0"
-                 style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-              <div className="text-xs text-muted-foreground">{lang === "bn" ? "অ্যাডমিন আপনাকে শীঘ্রই যোগাযোগ করবে।" : "Admin will reach out shortly."}</div>
-              <Input placeholder={lang === "bn" ? "আপনার নাম" : "Your name"} value={name} onChange={(e) => setName(e.target.value)} />
-              <Input placeholder={lang === "bn" ? "ফোন/ইমেইল" : "Phone/Email"} value={contact} onChange={(e) => setContact(e.target.value)} />
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowEscalate(false)}>{lang === "bn" ? "বাতিল" : "Cancel"}</Button>
-                <Button size="sm" className="flex-1" onClick={submitEscalation} disabled={loading}>
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (lang === "bn" ? "পাঠান" : "Submit")}
+              <div className="space-y-2 pt-2">
+                <Input
+                  placeholder={lang === "bn" ? "আপনার নাম *" : "Your name *"}
+                  value={preName}
+                  onChange={(e) => setPreName(e.target.value)}
+                  className="h-11"
+                />
+                <Input
+                  placeholder={lang === "bn" ? "ফোন নম্বর / ইমেইল *" : "Phone number / Email *"}
+                  value={preContact}
+                  onChange={(e) => setPreContact(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && startChat()}
+                  className="h-11"
+                />
+                <Button className="w-full h-11" onClick={startChat}>
+                  {lang === "bn" ? "চ্যাট শুরু করুন" : "Start chatting"}
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="p-2 border-t border-border/50 bg-card shrink-0"
-                 style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
-              <div className="flex gap-1.5 items-center">
-                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setShowEscalate(true)} title={lang === "bn" ? "অ্যাডমিনের সাথে কথা বলুন" : "Talk to admin"}>
-                  <UserCog className="h-5 w-5" />
-                </Button>
-                <Input
-                  className="h-11 text-base"
-                  placeholder={lang === "bn" ? "মেসেজ লিখুন..." : "Type a message..."}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && send(input)}
-                  disabled={loading}
-                />
-                <Button size="icon" className="h-11 w-11 shrink-0" onClick={() => send(input)} disabled={loading || !input.trim()}>
-                  <Send className="h-5 w-5" />
-                </Button>
+            <>
+              <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 space-y-2 bg-background/60">
+                {messages.map((m, i) => (
+                  <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+                    {m.role === "user" && (
+                      <div className="text-[10px] text-muted-foreground mb-0.5 mr-1">{visitor.name}</div>
+                    )}
+                    <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-snug whitespace-pre-wrap break-words ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        : m.role === "system"
+                        ? "bg-accent/30 text-foreground border border-accent/40 italic"
+                        : "bg-secondary text-secondary-foreground rounded-bl-sm"
+                    }`}>{m.content}</div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="bg-secondary rounded-2xl px-3 py-2 text-sm flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+
+              {showEscalate ? (
+                <div className="p-3 border-t border-border/50 space-y-2 bg-card shrink-0"
+                     style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+                  <div className="text-xs text-muted-foreground">
+                    {lang === "bn"
+                      ? `অ্যাডমিন আপনাকে শীঘ্রই ${visitor.contact}-এ যোগাযোগ করবে।`
+                      : `Admin will reach out to you at ${visitor.contact} shortly.`}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setShowEscalate(false)}>{lang === "bn" ? "বাতিল" : "Cancel"}</Button>
+                    <Button size="sm" className="flex-1" onClick={submitEscalation} disabled={loading}>
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (lang === "bn" ? "নিশ্চিত করুন" : "Confirm")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-2 border-t border-border/50 bg-card shrink-0"
+                     style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}>
+                  <div className="flex gap-1.5 items-center">
+                    <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setShowEscalate(true)} title={lang === "bn" ? "অ্যাডমিনের সাথে কথা বলুন" : "Talk to admin"}>
+                      <UserCog className="h-5 w-5" />
+                    </Button>
+                    <Input
+                      className="h-11 text-base"
+                      placeholder={lang === "bn" ? "মেসেজ লিখুন..." : "Type a message..."}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && send(input)}
+                      disabled={loading}
+                    />
+                    <Button size="icon" className="h-11 w-11 shrink-0" onClick={() => send(input)} disabled={loading || !input.trim()}>
+                      <Send className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
