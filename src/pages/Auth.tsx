@@ -118,9 +118,23 @@ export default function Auth() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-elegant p-8">
         <h1 className="text-2xl font-bold mb-1 gradient-text">{title}</h1>
         <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
+        {mode !== "forgot" && (
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
+            <button type="button" onClick={() => { setMethod("email"); setOtpSent(false); }}
+              className={`text-sm py-1.5 rounded-md transition ${method === "email" ? "bg-background shadow" : "text-muted-foreground"}`}>
+              {bn ? "ইমেইল" : "Email"}
+            </button>
+            <button type="button" onClick={() => { setMethod("phone"); setOtpSent(false); }}
+              className={`text-sm py-1.5 rounded-md transition ${method === "phone" ? "bg-background shadow" : "text-muted-foreground"}`}>
+              {bn ? "ফোন" : "Phone"}
+            </button>
+          </div>
+        )}
         <form onSubmit={submit} className="space-y-4">
-          <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-          {mode !== "forgot" && (
+          {(mode === "forgot" || method === "email") && (
+            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+          )}
+          {mode !== "forgot" && method === "email" && (
             <div>
               <div className="flex items-center justify-between">
                 <Label>Password</Label>
@@ -133,14 +147,30 @@ export default function Auth() {
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
           )}
+          {mode !== "forgot" && method === "phone" && (
+            <>
+              <div>
+                <Label>{bn ? "ফোন নম্বর" : "Phone number"}</Label>
+                <Input type="tel" placeholder="+8801XXXXXXXXX" value={phone}
+                  onChange={(e) => { setPhone(e.target.value); setOtpSent(false); }} required />
+              </div>
+              {otpSent && (
+                <div>
+                  <Label>OTP</Label>
+                  <Input inputMode="numeric" value={otp} onChange={(e) => setOtp(e.target.value)} required />
+                </div>
+              )}
+            </>
+          )}
           <Button type="submit" variant="hero" className="w-full" disabled={busy}>
             {busy ? "..."
+              : mode === "forgot" ? (bn ? "রিসেট লিংক পাঠান" : "Send reset link")
+              : method === "phone" ? (otpSent ? (bn ? "যাচাই করুন" : "Verify OTP") : (bn ? "OTP পাঠান" : "Send OTP"))
               : mode === "login" ? (bn ? "লগইন" : "Sign In")
-              : mode === "signup" ? (bn ? "সাইন আপ" : "Sign Up")
-              : (bn ? "রিসেট লিংক পাঠান" : "Send reset link")}
+              : (bn ? "সাইন আপ" : "Sign Up")}
           </Button>
         </form>
-        {mode !== "forgot" && (
+        {mode !== "forgot" && method === "email" && (
           <>
             <div className="my-4 flex items-center gap-2 text-xs text-muted-foreground">
               <div className="flex-1 h-px bg-border" /> OR <div className="flex-1 h-px bg-border" />
@@ -154,7 +184,7 @@ export default function Auth() {
               {bn ? "← লগইনে ফিরে যান" : "← Back to sign in"}
             </button>
           ) : (
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="text-sm text-primary hover:underline">
+            <button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setOtpSent(false); }} className="text-sm text-primary hover:underline">
               {mode === "login" ? (bn ? "অ্যাকাউন্ট নেই? সাইন আপ" : "No account? Sign up") : (bn ? "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন" : "Have an account? Sign in")}
             </button>
           )}
