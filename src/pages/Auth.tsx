@@ -55,6 +55,28 @@ export default function Auth() {
       else toast.success(bn ? "রিসেট লিংক পাঠানো হয়েছে। ইমেইল চেক করুন।" : "Reset link sent. Check your inbox.");
       return;
     }
+
+    if (method === "phone") {
+      const okPhone = phoneSchema.safeParse(phone);
+      if (!okPhone.success) { toast.error(bn ? "সঠিক ফোন নম্বর দিন (e.g. +8801XXXXXXXXX)" : okPhone.error.issues[0].message); return; }
+      setBusy(true);
+      if (!otpSent) {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone,
+          options: { shouldCreateUser: mode === "signup" },
+        });
+        setBusy(false);
+        if (error) toast.error(error.message);
+        else { setOtpSent(true); toast.success(bn ? "OTP পাঠানো হয়েছে" : "OTP sent to your phone"); }
+      } else {
+        if (otp.length < 4) { setBusy(false); toast.error(bn ? "OTP দিন" : "Enter OTP"); return; }
+        const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
+        setBusy(false);
+        if (error) toast.error(error.message);
+      }
+      return;
+    }
+
     const parsed = schema.safeParse({ email, password });
     if (!parsed.success) { toast.error(bn ? "সঠিক ইমেইল ও পাসওয়ার্ড দিন (৬+)" : "Valid email & password (6+) required"); return; }
     setBusy(true);
@@ -67,7 +89,6 @@ export default function Auth() {
       else {
         toast.success(bn ? "অ্যাকাউন্ট তৈরি হয়েছে!" : "Account created!");
         if (!data.session) {
-          // fallback: auto sign in if session not returned
           await supabase.auth.signInWithPassword({ email, password });
         }
       }
