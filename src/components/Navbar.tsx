@@ -57,10 +57,10 @@ export function Navbar() {
   return (
     <header className="fixed top-3 left-3 right-3 sm:top-4 sm:left-6 sm:right-6 z-50 transition-smooth">
       <nav className={`container flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-3 px-3 sm:px-5 rounded-2xl border backdrop-blur-2xl transition-smooth ${scrolled ? "bg-background/70 border-border/60 shadow-elegant" : "bg-background/40 border-border/30 shadow-soft"}`}>
-        <a href="#" className="flex items-center gap-1.5 sm:gap-2 font-bold text-lg min-w-0 flex-1 sm:flex-initial">
+        <Link to="/" className="flex items-center gap-1.5 sm:gap-2 font-bold text-lg min-w-0 flex-1 sm:flex-initial">
           <img src={settings.logo_url || defaultLogo} alt={settings.brand_name} className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shadow-glow object-cover shrink-0" />
           <span className="text-foreground text-sm sm:text-xl font-bold tracking-tight truncate">{settings.brand_name}</span>
-        </a>
+        </Link>
 
         <div className="hidden md:flex items-center gap-1">
           {links.map((l, i) => {
