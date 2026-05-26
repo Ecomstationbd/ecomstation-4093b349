@@ -183,3 +183,45 @@ export default function Dashboard() {
     </div>
   );
 }
+
+function PhoneVerify({ phone, bn }: { phone: string; bn: boolean }) {
+  const [sent, setSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const send = async () => {
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ phone });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else { setSent(true); toast.success(bn ? "OTP পাঠানো হয়েছে" : "OTP sent"); }
+  };
+
+  const verify = async () => {
+    if (otp.length < 4) return toast.error(bn ? "OTP দিন" : "Enter OTP");
+    setBusy(true);
+    const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "phone_change" });
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success(bn ? "ফোন ভেরিফাইড" : "Phone verified");
+  };
+
+  return (
+    <div className="mt-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span>{bn ? "ফোন ভেরিফাই করা হয়নি" : "Phone not verified"}</span>
+        {!sent && (
+          <Button size="sm" variant="outline" onClick={send} disabled={busy}>
+            {bn ? "OTP পাঠান" : "Send OTP"}
+          </Button>
+        )}
+      </div>
+      {sent && (
+        <div className="flex gap-2">
+          <Input inputMode="numeric" placeholder="OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
+          <Button size="sm" onClick={verify} disabled={busy}>{bn ? "যাচাই" : "Verify"}</Button>
+        </div>
+      )}
+    </div>
+  );
+}
