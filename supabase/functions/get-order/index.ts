@@ -30,9 +30,20 @@ Deno.serve(async (req) => {
       });
     }
     const { data: items, error: ie } = await supabase
-      .from("order_items").select("product_name,price,quantity").eq("order_id", order_id);
+      .from("order_items").select("product_name,price,quantity,product_id").eq("order_id", order_id);
     if (ie) throw ie;
-    return new Response(JSON.stringify({ order, items: items || [] }), {
+    const ids = Array.from(new Set((items || []).map((i: any) => i.product_id).filter(Boolean)));
+    let productMap: Record<string, { download_url: string | null; category: string }> = {};
+    if (ids.length) {
+      const { data: prods } = await supabase.from("products").select("id,download_url,category").in("id", ids);
+      productMap = Object.fromEntries((prods || []).map((p: any) => [p.id, { download_url: p.download_url, category: p.category }]));
+    }
+    const enriched = (items || []).map((i: any) => ({
+      ...i,
+      download_url: i.product_id ? productMap[i.product_id]?.download_url || null : null,
+      is_digital: i.product_id ? productMap[i.product_id]?.category === "digital" : false,
+    }));
+    return new Response(JSON.stringify({ order, items: enriched }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
