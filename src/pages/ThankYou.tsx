@@ -25,7 +25,7 @@ type OrderRow = {
   status: string;
   created_at: string;
 };
-type ItemRow = { product_name: string; price: number; quantity: number };
+type ItemRow = { product_name: string; price: number; quantity: number; product_id?: string | null; download_url?: string | null; is_digital?: boolean };
 
 // Read --primary HSL from CSS and return [r,g,b]
 function primaryRgb(): [number, number, number] {
