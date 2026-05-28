@@ -585,7 +585,7 @@ function ProductsAdmin() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Type</Label>
-                  <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v })}>
+                  <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v, is_physical: v === "physical" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="physical">Physical</SelectItem><SelectItem value="digital">Digital</SelectItem></SelectContent>
                   </Select>
