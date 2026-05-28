@@ -135,35 +135,9 @@ export function Shop() {
         )}
 
 
-        {/* Physical Products Section */}
-        {physical.length > 0 && (
-          <div className="mb-16">
-            <div className="flex items-center justify-between gap-3 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Package2 className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold">{t("shop_label_physical")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
-                  <p className="text-[10px] text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5" asChild>
-                <Link to="/physical-products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-
-              {physical.map((p) => (
-                <ProductCard key={p.id} p={p} />
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Digital Products Section */}
         {digital.length > 0 && (
-          <div className="mb-12">
+          <div className="mb-16">
             <div className="flex items-center justify-between gap-3 mb-6">
               <div className="flex items-center gap-3">
                 <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -180,6 +154,31 @@ export function Shop() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {digital.map((p) => (
+                <ProductCard key={p.id} p={p} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Physical Products Section */}
+        {physical.length > 0 && (
+          <div className="mb-12">
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Package2 className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">{t("shop_label_physical")} {lang === "bn" ? "প্রোডাক্ট" : "Products"}</h3>
+                  <p className="text-[10px] text-muted-foreground">{lang === "bn" ? "ফিজিক্যাল প্যাকেজিং ও সরঞ্জাম" : "Physical packaging & equipment"}</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" className="text-[10px] h-7 px-2.5" asChild>
+                <Link to="/physical-products">{lang === "bn" ? "সব দেখুন" : "View All"} <ArrowRight className="h-3 w-3" /></Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {physical.map((p) => (
                 <ProductCard key={p.id} p={p} />
               ))}
             </div>
