@@ -378,6 +378,30 @@ export default function ThankYou() {
             </div>
           )}
 
+          {items.some((i) => i.is_digital && i.download_url) && (
+            <div className="text-left bg-primary/5 border border-primary/30 rounded-lg p-4 space-y-2">
+              <div className="font-semibold text-sm flex items-center gap-2">
+                <Download className="w-4 h-4 text-primary" />
+                {bn ? "আপনার ডিজিটাল ফাইল ডাউনলোড" : "Your Digital Downloads"}
+              </div>
+              <div className="space-y-1.5">
+                {items.filter((i) => i.is_digital && i.download_url).map((i, idx) => (
+                  <a key={idx} href={i.download_url!} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 bg-background border border-border rounded-md px-3 py-2 text-sm hover:border-primary transition-colors">
+                    <span className="truncate">{i.product_name}</span>
+                    <span className="inline-flex items-center gap-1 text-primary text-xs font-medium shrink-0">
+                      <Download className="w-3.5 h-3.5" /> {bn ? "ডাউনলোড" : "Download"}
+                    </span>
+                  </a>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {bn ? "এই লিংকগুলো সেভ করে রাখুন। ইনভয়েস নম্বর দিয়ে আবার এই পেজে ফিরে আসতে পারবেন।" : "Save these links. You can revisit this page with your invoice number anytime."}
+              </p>
+            </div>
+          )}
+
+
           <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-center">
             <Button variant="outline" size="lg" onClick={() => navigate("/")} className="gap-2">
               <Home className="w-4 h-4" />
