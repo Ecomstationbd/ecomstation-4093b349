@@ -142,8 +142,20 @@ export default function ThankYou() {
       const { data: o } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
       if (o) {
         setOrder(o as OrderRow);
-        const { data: it } = await supabase.from("order_items").select("product_name,price,quantity").eq("order_id", orderId);
-        if (it) setItems(it as ItemRow[]);
+        const { data: it } = await supabase.from("order_items").select("product_name,price,quantity,product_id").eq("order_id", orderId);
+        if (it) {
+          const ids = Array.from(new Set(it.map((i: any) => i.product_id).filter(Boolean)));
+          let pmap: Record<string, { download_url: string | null; category: string }> = {};
+          if (ids.length) {
+            const { data: prods } = await supabase.from("products").select("id,download_url,category").in("id", ids);
+            pmap = Object.fromEntries((prods || []).map((p: any) => [p.id, { download_url: p.download_url, category: p.category }]));
+          }
+          setItems(it.map((i: any) => ({
+            ...i,
+            download_url: i.product_id ? pmap[i.product_id]?.download_url || null : null,
+            is_digital: i.product_id ? pmap[i.product_id]?.category === "digital" : false,
+          })) as ItemRow[]);
+        }
         return;
       }
       const { data, error } = await supabase.functions.invoke("get-order", { body: { order_id: orderId } });
