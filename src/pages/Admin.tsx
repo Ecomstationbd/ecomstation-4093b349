@@ -585,7 +585,7 @@ function ProductsAdmin() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Type</Label>
-                  <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v })}>
+                  <Select value={editing.category} onValueChange={(v) => setEditing({ ...editing, category: v, is_physical: v === "physical" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem value="physical">Physical</SelectItem><SelectItem value="digital">Digital</SelectItem></SelectContent>
                   </Select>
@@ -605,6 +605,14 @@ function ProductsAdmin() {
                 <div><Label>Main Image URL</Label><Input value={editing.image_url || ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></div>
               </div>
               <div><Label>Gallery (one URL per line)</Label><Textarea rows={3} value={galleryStr} onChange={(e) => setEditing({ ...editing, gallery: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })} /></div>
+
+              {editing.category === "digital" && (
+                <div className="border border-primary/30 bg-primary/5 rounded-lg p-3 space-y-1">
+                  <Label>Digital File Download URL <span className="text-xs text-muted-foreground">(customer gets this link after purchase)</span></Label>
+                  <Input value={editing.download_url || ""} onChange={(e) => setEditing({ ...editing, download_url: e.target.value })} placeholder="https://... (Google Drive, Dropbox, direct file URL)" />
+                  <p className="text-[10px] text-muted-foreground">No delivery charge will be applied for digital products.</p>
+                </div>
+              )}
 
               <div className="border-t border-border pt-3 space-y-3">
                 <div className="flex items-center justify-between">

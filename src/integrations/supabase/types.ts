@@ -592,6 +592,7 @@ export type Database = {
           created_at: string
           description_bn: string | null
           description_en: string | null
+          download_url: string | null
           gallery: Json
           id: string
           image_url: string | null
@@ -617,6 +618,7 @@ export type Database = {
           created_at?: string
           description_bn?: string | null
           description_en?: string | null
+          download_url?: string | null
           gallery?: Json
           id?: string
           image_url?: string | null
@@ -642,6 +644,7 @@ export type Database = {
           created_at?: string
           description_bn?: string | null
           description_en?: string | null
+          download_url?: string | null
           gallery?: Json
           id?: string
           image_url?: string | null
