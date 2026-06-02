@@ -5,6 +5,7 @@ import { Services } from "@/components/Services";
 import { Shop } from "@/components/Shop";
 import { WhyUs } from "@/components/WhyUs";
 import { Testimonials } from "@/components/Testimonials";
+import { LatestBlogs } from "@/components/LatestBlogs";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 import { ChatWidget } from "@/components/ChatWidget";
