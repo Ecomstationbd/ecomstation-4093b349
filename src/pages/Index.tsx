@@ -27,6 +27,7 @@ const Index = () => {
         <Reveal><Shop /></Reveal>
         <Reveal><WhyUs /></Reveal>
         <Reveal><Testimonials /></Reveal>
+        <Reveal><LatestBlogs /></Reveal>
         <Reveal><CTA /></Reveal>
       </main>
       <Footer />
